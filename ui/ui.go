@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"io/ioutil"
 	"log"
-	"time"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -18,6 +16,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/psanford/wormhole-william-mobile/ui/plog"
 )
 
 type UI struct {
@@ -29,24 +28,12 @@ func New() *UI {
 
 func (ui *UI) Run() error {
 	w := app.NewWindow(app.Size(unit.Dp(800), unit.Dp(700)))
-	dataDir, err := app.DataDir()
-	if err != nil {
-		logF("DataDir err: %s", err)
-	} else {
-		logF("DataDir: %s", dataDir)
-	}
 
 	if err := loop(w); err != nil {
 		log.Fatal(err)
 	}
 
 	return nil
-}
-
-func logF(format string, args ...interface{}) {
-	str := fmt.Sprintf(format, args...)
-	log.Print(str)
-	logText.Insert(fmt.Sprintf("[%s] %s\n", time.Now().Format(time.RFC3339), str))
 }
 
 func loop(w *app.Window) error {
@@ -57,12 +44,15 @@ func loop(w *app.Window) error {
 	var ops op.Ops
 	for {
 		select {
+		case logMsg := <-plog.MsgChan():
+			logText.Insert(logMsg)
+
 		case e := <-w.Events():
 			switch e := e.(type) {
 			case system.DestroyEvent:
 				return e.Err
 			// case app.ViewEvent:
-			// 	logF("Got view event")
+			// 	plog.Printf("Got view event")
 			// 	viewEvent = e
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
@@ -73,32 +63,7 @@ func loop(w *app.Window) error {
 				}
 
 				if sendTextClicked {
-					logF("Should send text: %s", textEditor.Text())
-				}
-
-				if enabledToggle.Changed() {
-					state := "enabled"
-					if !enabledToggle.Value {
-						state = "disabled"
-					}
-
-					url := textEditor.Text()
-					username := usernameEditor.Text()
-					passwd := "<unset>"
-					if passwordEditor.Text() != "" {
-						passwd = "<redacted>"
-					}
-
-					logText.Insert(fmt.Sprintf("[%s] service state=%s url=%s username=%s password=%s\n", time.Now().Format(time.RFC3339), state, url, username, passwd))
-
-					if state == "enabled" {
-						files, err := ioutil.ReadDir("/sdcard/DCIM/Camera")
-						if err != nil {
-							logF("read sdcard err: %s", err)
-						} else {
-							logF("sdcard pictures: %+v", files)
-						}
-					}
+					plog.Printf("Should send text: %s", textMsgEditor.Text())
 				}
 
 				layout.Inset{
@@ -116,26 +81,20 @@ func loop(w *app.Window) error {
 }
 
 var (
-	logText    = new(widget.Editor)
-	textEditor = &widget.Editor{
+	logText       = new(widget.Editor)
+	textMsgEditor = &widget.Editor{
 		Submit: true,
 	}
-	usernameEditor = &widget.Editor{
-		SingleLine: true,
-		Submit:     true,
+	recvCodeEditor = &widget.Editor{
+		Submit: true,
 	}
-	passwordEditor = &widget.Editor{
-		SingleLine: true,
-		Submit:     true,
-	}
-	disableBtn   = new(widget.Clickable)
+	recvMsgBtn   = new(widget.Clickable)
 	sendTextBtn  = new(widget.Clickable)
 	settingsList = &layout.List{
 		Axis: layout.Vertical,
 	}
 
-	topLabel      = "Wormhole William"
-	enabledToggle = new(widget.Bool)
+	topLabel = "Wormhole William"
 
 	tabs = Tabs{
 		tabs: []Tab{
@@ -220,10 +179,10 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				switch selected {
 				case "Send Text":
 					return drawSendText(gtx, th)
-				case "Send File":
-					return drawSettings(gtx, th)
+				// case "Send File":
+				// return drawSettings(gtx, th)
 				case "Recv":
-					return drawSettings(gtx, th)
+					return drawRecv(gtx, th)
 				case "Debug":
 					return drawDebug(gtx, th)
 				default:
@@ -258,18 +217,9 @@ func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	}
 
 	widgets := []layout.Widget{
-		textField("Text", "Message", textEditor),
+		textField("Text", "Message", textMsgEditor),
 
-		func(gtx layout.Context) layout.Dimensions {
-			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.Inset{Left: unit.Dp(16)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						btn := material.Button(th, sendTextBtn, "Send")
-						return btn.Layout(gtx)
-					})
-				}),
-			)
-		},
+		material.Button(th, sendTextBtn, "Send").Layout,
 	}
 
 	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
@@ -277,7 +227,7 @@ func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	})
 }
 
-func drawSettings(gtx layout.Context, th *material.Theme) layout.Dimensions {
+func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	textField := func(label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
 		return func(gtx layout.Context) layout.Dimensions {
 			flex := layout.Flex{
@@ -299,38 +249,9 @@ func drawSettings(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	}
 
 	widgets := []layout.Widget{
-		textField("Username", "Username", usernameEditor),
-		textField("Password", "Password", passwordEditor),
+		textField("Code", "Code", recvCodeEditor),
 
-		func(gtx layout.Context) layout.Dimensions {
-			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.Inset{Left: unit.Dp(16)}.Layout(gtx,
-						material.Switch(th, enabledToggle).Layout,
-					)
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.Inset{Left: unit.Dp(16)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						text := "enabled"
-						if !enabledToggle.Value {
-							text = "disabled"
-							gtx = gtx.Disabled()
-						}
-
-						btn := material.Button(th, disableBtn, text)
-						return btn.Layout(gtx)
-					})
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.Inset{Left: unit.Dp(16)}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						if !enabledToggle.Value {
-							return layout.Dimensions{}
-						}
-						return material.Loader(th).Layout(gtx)
-					})
-				}),
-			)
-		},
+		material.Button(th, recvMsgBtn, "Receive").Layout,
 	}
 
 	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
