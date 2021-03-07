@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"log"
+	"os"
 	"sync"
 
 	"gioui.org/app"
@@ -19,6 +20,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/psanford/wormhole-william-mobile/jgo"
 	"github.com/psanford/wormhole-william-mobile/ui/plog"
 	"github.com/psanford/wormhole-william/wormhole"
 )
@@ -48,18 +50,71 @@ func (ui *UI) loop(w *app.Window) error {
 		ctx = context.Background()
 	)
 
+	var (
+		pickResult <-chan jgo.PickResult
+		viewEvent  app.ViewEvent
+	)
+
 	var ops op.Ops
 	for {
 		select {
 		case logMsg := <-plog.MsgChan():
 			logText.Insert(logMsg)
 
+		case result := <-pickResult:
+			pickResult = nil
+			// TODO(PMS): display error
+			plog.Printf("pick result: path=%s name=%s err=%s", result.Path, result.Name, result.Err)
+			if result.Err != nil {
+				sendFileCodeTxt.SetText(fmt.Sprintf("Pick file err: %s", result.Err))
+				w.Invalidate()
+				continue
+			}
+
+			if result.Path != "" {
+				f, err := os.Open(result.Path)
+				if err != nil {
+					plog.Printf("open file err path=%s err=%s", result.Path, err)
+					sendFileCodeTxt.SetText(fmt.Sprintf("open file err: %s", err))
+					w.Invalidate()
+					continue
+				}
+
+				code, status, err := wh.SendFile(ctx, result.Name, f)
+				if err != nil {
+					plog.Printf("wormhole send error err=%s", err)
+					sendFileCodeTxt.SetText(fmt.Sprintf("wormhole send err: %s", err))
+					w.Invalidate()
+					continue
+				}
+
+				sendFileCodeTxt.SetText(code)
+
+				go func() {
+					s := <-status
+					if s.Error != nil {
+						sendFileCodeTxt.SetText(fmt.Sprintf("wormhole send err: %s", s.Error))
+					} else {
+						sendFileCodeTxt.SetText("Send Complete!")
+					}
+					w.Invalidate()
+				}()
+			}
 		case e := <-w.Events():
 			switch e := e.(type) {
 			case system.DestroyEvent:
 				return e.Err
+			case app.ViewEvent:
+				viewEvent = e
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
+
+				var sendFileOnce sync.Once
+				for sendFileBtn.Clicked() {
+					sendFileOnce.Do(func() {
+						pickResult = jgo.PickFile(viewEvent)
+					})
+				}
 
 				var sendTextOnce sync.Once
 				for sendTextBtn.Clicked() {
@@ -157,6 +212,9 @@ var (
 		Axis: layout.Vertical,
 	}
 
+	sendFileCodeTxt = new(widget.Editor)
+	sendFileBtn     = new(widget.Clickable)
+
 	topLabel = "Wormhole William"
 
 	tabs = Tabs{
@@ -242,8 +300,8 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				switch selected {
 				case "Send Text":
 					return drawSendText(gtx, th)
-				// case "Send File":
-				// return drawSettings(gtx, th)
+				case "Send File":
+					return drawSendFile(gtx, th)
 				case "Recv":
 					return drawRecv(gtx, th)
 				case "Debug":
@@ -303,6 +361,20 @@ func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
 			return material.Editor(th, recvTxtMsg, "").Layout(gtx)
+		},
+	}
+
+	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+		return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
+	})
+}
+
+func drawSendFile(gtx layout.Context, th *material.Theme) layout.Dimensions {
+	widgets := []layout.Widget{
+		material.Button(th, sendFileBtn, "Choose File").Layout,
+		func(gtx C) D {
+			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
+			return material.Editor(th, sendFileCodeTxt, "").Layout(gtx)
 		},
 	}
 
