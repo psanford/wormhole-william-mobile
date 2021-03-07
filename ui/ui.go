@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"gioui.org/app"
@@ -153,30 +156,91 @@ func (ui *UI) loop(w *app.Window) error {
 							return
 						}
 
+						errf := func(msg string, args ...interface{}) {
+							recvTxtMsg.SetText(fmt.Sprintf(msg, args...))
+							plog.Printf(msg, args...)
+						}
+
 						go func() {
 							msg, err := wh.Receive(ctx, code)
 							if err != nil {
 								// TODO(PMS): set the color to red
-								recvTxtMsg.SetText(fmt.Sprintf("Recv error: %s", err))
-								plog.Printf("Recv msg err: %s", err)
+								errf("Recv msg err: %s", err)
 								return
 							}
-							if msg.Type != wormhole.TransferText {
-								msg.Reject()
-								err := fmt.Errorf("recv err: %s type not supported yet", msg.Type)
-								recvTxtMsg.SetText(err.Error())
-								plog.Printf("Recv msg err: %s", err)
-								return
-							}
+							switch msg.Type {
+							case wormhole.TransferText:
+								msgBody, err := ioutil.ReadAll(msg)
+								if err != nil {
+									errf("Recv msg err: %s", err)
+									return
+								}
 
-							msgBody, err := ioutil.ReadAll(msg)
-							if err != nil {
-								recvTxtMsg.SetText(fmt.Sprintf("Recv error: %s", err))
-								plog.Printf("Recv msg err: %s", err)
-								return
-							}
+								recvTxtMsg.SetText(string(msgBody))
+							case wormhole.TransferFile, wormhole.TransferDirectory:
+								dataDir, err := app.DataDir()
+								if err != nil {
+									msg.Reject()
 
-							recvTxtMsg.SetText(string(msgBody))
+									errf("Recv error, cannot get datadir: %s", err)
+									return
+								}
+
+								name := msg.Name
+								if msg.Type == wormhole.TransferDirectory {
+									name += ".zip"
+								}
+
+								path := filepath.Join(dataDir, name)
+								if _, err := os.Stat(name); err == nil {
+									msg.Reject()
+									errf("Error refusing to overwrite existing '%s'", name)
+									return
+								} else if !os.IsNotExist(err) {
+									msg.Reject()
+									errf("Error stat'ing existing '%s'\n", name)
+									return
+								}
+
+								// XXXXX
+								// TODO(PMS): confirm file before recving
+
+								f, err := os.CreateTemp(dataDir, fmt.Sprintf("%s.tmp", name))
+								if err != nil {
+									msg.Reject()
+									errf("Create tmp file failed: %s", err)
+									return
+								}
+
+								_, err = io.Copy(f, msg)
+								if err != nil {
+									os.Remove(f.Name())
+									errf("Receive file error: %s", err)
+									return
+								}
+
+								tmpName := f.Name()
+								f.Seek(0, io.SeekStart)
+								header := make([]byte, 512)
+								io.ReadFull(f, header)
+								f.Close()
+
+								err = os.Rename(tmpName, path)
+								if err != nil {
+									errf("Rename file err: %s", err)
+									return
+								}
+
+								var contentType string
+								if msg.Type == wormhole.TransferDirectory {
+									contentType = "application/zip"
+								} else {
+									contentType = http.DetectContentType(header)
+								}
+
+								plog.Printf("Call NotifyDownloadManager")
+								jgo.NotifyDownloadManager(viewEvent, name, path, contentType, msg.TransferBytes64)
+							}
 						}()
 					})
 				}

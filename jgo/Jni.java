@@ -1,24 +1,24 @@
 package io.sanford.wormholewilliam;
 
-import android.os.Bundle;
-import android.content.Intent;
-import android.net.Uri;
-
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
-import java.lang.String;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import android.content.ContentResolver;
-import android.database.Cursor;
-import android.provider.OpenableColumns;
+import java.lang.String;
 
 
 public class Jni extends Fragment {
