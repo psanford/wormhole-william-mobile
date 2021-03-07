@@ -261,22 +261,18 @@ func (ui *UI) loop(w *app.Window) error {
 
 var (
 	logText       = new(widget.Editor)
-	textMsgEditor = &widget.Editor{
-		Submit: true,
-	}
-	textStatus  = new(widget.Editor)
-	sendTextBtn = new(widget.Clickable)
+	textMsgEditor = new(RichEditor)
+	textStatus    = new(RichEditor)
+	sendTextBtn   = new(widget.Clickable)
 
-	recvCodeEditor = &widget.Editor{
-		Submit: true,
-	}
-	recvMsgBtn   = new(widget.Clickable)
-	recvTxtMsg   = new(widget.Editor)
-	settingsList = &layout.List{
+	recvCodeEditor = new(RichEditor)
+	recvMsgBtn     = new(widget.Clickable)
+	recvTxtMsg     = new(RichEditor)
+	settingsList   = &layout.List{
 		Axis: layout.Vertical,
 	}
 
-	sendFileCodeTxt = new(widget.Editor)
+	sendFileCodeTxt = new(RichEditor)
 	sendFileBtn     = new(widget.Clickable)
 
 	topLabel = "Wormhole William"
@@ -380,7 +376,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	)
 }
 
-func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
+func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *RichEditor) func(layout.Context) layout.Dimensions {
 	return func(gtx layout.Context) layout.Dimensions {
 		flex := layout.Flex{
 			Axis: layout.Vertical,
@@ -390,7 +386,7 @@ func textField(gtx layout.Context, th *material.Theme, label, hint string, edito
 				return material.H5(th, label).Layout(gtx)
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				e := material.Editor(th, editor, hint)
+				e := PasteEditor(th, editor, hint)
 				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
 				return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
@@ -408,7 +404,7 @@ func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		material.Button(th, sendTextBtn, "Send").Layout,
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return material.Editor(th, textStatus, "").Layout(gtx)
+			return CopyEditor(th, textStatus).Layout(gtx)
 		},
 	}
 
@@ -424,7 +420,7 @@ func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		material.Button(th, recvMsgBtn, "Receive").Layout,
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return material.Editor(th, recvTxtMsg, "").Layout(gtx)
+			return CopyEditor(th, recvTxtMsg).Layout(gtx)
 		},
 	}
 
@@ -438,7 +434,7 @@ func drawSendFile(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		material.Button(th, sendFileBtn, "Choose File").Layout,
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return material.Editor(th, sendFileCodeTxt, "").Layout(gtx)
+			return CopyEditor(th, sendFileCodeTxt).Layout(gtx)
 		},
 	}
 

@@ -7,4 +7,5 @@ require (
 	gioui.org/cmd v0.0.0-20210305084558-9793fcfcd0ac
 	git.wow.st/gmp/jni v0.0.0-20200827154156-014cd5c7c4c0
 	github.com/psanford/wormhole-william v1.0.4
+	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
 )
