@@ -1,10 +1,13 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"image/color"
+	"io/ioutil"
 	"log"
+	"sync"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -17,6 +20,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"github.com/psanford/wormhole-william-mobile/ui/plog"
+	"github.com/psanford/wormhole-william/wormhole"
 )
 
 type UI struct {
@@ -29,17 +33,20 @@ func New() *UI {
 func (ui *UI) Run() error {
 	w := app.NewWindow(app.Size(unit.Dp(800), unit.Dp(700)))
 
-	if err := loop(w); err != nil {
+	if err := ui.loop(w); err != nil {
 		log.Fatal(err)
 	}
 
 	return nil
 }
 
-func loop(w *app.Window) error {
+func (ui *UI) loop(w *app.Window) error {
 	th := material.NewTheme(gofont.Collection())
 
-	// var viewEvent app.ViewEvent
+	var (
+		wh  wormhole.Client
+		ctx = context.Background()
+	)
 
 	var ops op.Ops
 	for {
@@ -51,19 +58,72 @@ func loop(w *app.Window) error {
 			switch e := e.(type) {
 			case system.DestroyEvent:
 				return e.Err
-			// case app.ViewEvent:
-			// 	plog.Printf("Got view event")
-			// 	viewEvent = e
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
 
-				var sendTextClicked bool
+				var sendTextOnce sync.Once
 				for sendTextBtn.Clicked() {
-					sendTextClicked = true
+					sendTextOnce.Do(func() {
+						msg := textMsgEditor.Text()
+						if msg == "" {
+							return
+						}
+
+						code, status, err := wh.SendText(ctx, msg)
+						if err != nil {
+							textStatus.SetText(fmt.Sprintf("Send err: %s", err))
+							plog.Printf("Send err: %s", err)
+							return
+						}
+
+						textStatus.SetText(fmt.Sprintf("Code: %s", code))
+
+						go func() {
+							s := <-status
+							if s.Error != nil {
+								textStatus.SetText(fmt.Sprintf("Send error: %s", s.Error))
+								plog.Printf("Send error: %s", s.Error)
+							} else if s.OK {
+								textStatus.SetText("OK!")
+							}
+						}()
+					})
 				}
 
-				if sendTextClicked {
-					plog.Printf("Should send text: %s", textMsgEditor.Text())
+				var recvOnce sync.Once
+				for recvMsgBtn.Clicked() {
+					recvOnce.Do(func() {
+						code := recvCodeEditor.Text()
+						if code == "" {
+							return
+						}
+
+						go func() {
+							msg, err := wh.Receive(ctx, code)
+							if err != nil {
+								// TODO(PMS): set the color to red
+								recvTxtMsg.SetText(fmt.Sprintf("Recv error: %s", err))
+								plog.Printf("Recv msg err: %s", err)
+								return
+							}
+							if msg.Type != wormhole.TransferText {
+								msg.Reject()
+								err := fmt.Errorf("recv err: %s type not supported yet", msg.Type)
+								recvTxtMsg.SetText(err.Error())
+								plog.Printf("Recv msg err: %s", err)
+								return
+							}
+
+							msgBody, err := ioutil.ReadAll(msg)
+							if err != nil {
+								recvTxtMsg.SetText(fmt.Sprintf("Recv error: %s", err))
+								plog.Printf("Recv msg err: %s", err)
+								return
+							}
+
+							recvTxtMsg.SetText(string(msgBody))
+						}()
+					})
 				}
 
 				layout.Inset{
@@ -85,11 +145,14 @@ var (
 	textMsgEditor = &widget.Editor{
 		Submit: true,
 	}
+	textStatus  = new(widget.Editor)
+	sendTextBtn = new(widget.Clickable)
+
 	recvCodeEditor = &widget.Editor{
 		Submit: true,
 	}
 	recvMsgBtn   = new(widget.Clickable)
-	sendTextBtn  = new(widget.Clickable)
+	recvTxtMsg   = new(widget.Editor)
 	settingsList = &layout.List{
 		Axis: layout.Vertical,
 	}
@@ -195,31 +258,36 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	)
 }
 
-func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
-	textField := func(label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
-		return func(gtx layout.Context) layout.Dimensions {
-			flex := layout.Flex{
-				Axis: layout.Vertical,
-			}
-			return flex.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return material.H5(th, label).Layout(gtx)
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					e := material.Editor(th, editor, hint)
-					border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
-					return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
-					})
-				}),
-			)
+func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
+	return func(gtx layout.Context) layout.Dimensions {
+		flex := layout.Flex{
+			Axis: layout.Vertical,
 		}
+		return flex.Layout(gtx,
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return material.H5(th, label).Layout(gtx)
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				e := material.Editor(th, editor, hint)
+				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
+				return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
+				})
+			}),
+		)
 	}
+}
+
+func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
 
 	widgets := []layout.Widget{
-		textField("Text", "Message", textMsgEditor),
+		textField(gtx, th, "Text", "Message", textMsgEditor),
 
 		material.Button(th, sendTextBtn, "Send").Layout,
+		func(gtx C) D {
+			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
+			return material.Editor(th, textStatus, "").Layout(gtx)
+		},
 	}
 
 	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
@@ -228,30 +296,14 @@ func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
 }
 
 func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
-	textField := func(label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
-		return func(gtx layout.Context) layout.Dimensions {
-			flex := layout.Flex{
-				Axis: layout.Vertical,
-			}
-			return flex.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return material.H5(th, label).Layout(gtx)
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					e := material.Editor(th, editor, hint)
-					border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
-					return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
-					})
-				}),
-			)
-		}
-	}
-
 	widgets := []layout.Widget{
-		textField("Code", "Code", recvCodeEditor),
+		textField(gtx, th, "Code", "Code", recvCodeEditor),
 
 		material.Button(th, recvMsgBtn, "Receive").Layout,
+		func(gtx C) D {
+			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
+			return material.Editor(th, recvTxtMsg, "").Layout(gtx)
+		},
 	}
 
 	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
