@@ -82,7 +82,7 @@ func (ui *UI) loop(w *app.Window) error {
 				}
 
 				progress := func(sentBytes, totalBytes int64) {
-					statusMsg.SetText(fmt.Sprintf("Send progress %d/%d", sentBytes, totalBytes))
+					statusMsg.SetText(fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes)))
 					w.Invalidate()
 				}
 				code, status, err := wh.SendFile(ctx, result.Name, f, wormhole.WithProgress(progress))
@@ -246,18 +246,26 @@ func (ui *UI) loop(w *app.Window) error {
 								}
 
 								r := newCountReader(msg)
+								stop := make(chan struct{})
 
 								go func() {
+									statusMsg.SetText(fmt.Sprintf("receiving %d/%s", 0, formatBytes(msg.TransferBytes64)))
 									for count := range r.countUpdate {
-										statusMsg.SetText(fmt.Sprintf("receiving %d/%d", count, msg.TransferBytes64))
+										select {
+										case <-stop:
+											break
+										default:
+										}
+										statusMsg.SetText(fmt.Sprintf("receiving %s/%s", formatBytes(count), formatBytes(msg.TransferBytes64)))
 										w.Invalidate()
 										time.Sleep(500 * time.Millisecond)
 									}
 								}()
 
-								_, err = io.Copy(f, msg)
+								_, err = io.Copy(f, r)
 								r.Close()
 								if err != nil {
+									close(stop)
 									os.Remove(f.Name())
 									statusMsg.SetText(fmt.Sprintf("Receive file error: %s", err))
 									errf("Receive file error: %s", err)
@@ -283,6 +291,7 @@ func (ui *UI) loop(w *app.Window) error {
 									contentType = http.DetectContentType(header)
 								}
 
+								close(stop)
 								statusMsg.SetText("Receive complete")
 								w.Invalidate()
 
@@ -514,4 +523,17 @@ func drawSendFile(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
 		return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
 	})
+}
+
+func formatBytes(b int64) string {
+	const unit = 1000
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
 }
