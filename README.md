@@ -6,11 +6,11 @@ At the moment its in beta state. Transfers work although you might experience so
 
 ## Screenshots
 
-![recv1.png](screenshots/recv1.png?raw=true "Receive 1")
-![recv2.png](screenshots/recv2.png?raw=true "Receive 2")
-![send_text1.png](screenshots/send_text1.png?raw=true "Send Text 1")
-![send_text2.png](screenshots/send_text2.png?raw=true "Send Text 2")
-![send_file1.png](screenshots/send_file1.png?raw=true "Send File")
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv1.png?raw=true" alt="Receive 1" width="200" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv2.png?raw=true" alt="Receive 2" width="200" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send_text1.png?raw=true" alt="Send Text 1" width="200" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send_text2.png?raw=true" alt="Send Text 2" width="200" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send_file1.png?raw=true" alt="Send File" width="200" />
 
 ## Building
 
