@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"gioui.org/app"
@@ -123,16 +122,51 @@ func (ui *UI) loop(w *app.Window) error {
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
 
-				var sendFileOnce sync.Once
-				for sendFileBtn.Clicked() {
-					sendFileOnce.Do(func() {
-						pickResult = jgo.PickFile(viewEvent)
-					})
+				var (
+					sendFileClicked bool
+					sendTextClicked bool
+					recvClicked     bool
+					acceptClicked   bool
+					cancelClicked   bool
+				)
+				type btnState struct {
+					name    string
+					btn     *widget.Clickable
+					clicked *bool
+				}
+				btns := []btnState{
+					{"sendFileBtn", sendFileBtn, &sendFileClicked},
+					{"sendTextBtn", sendTextBtn, &sendTextClicked},
+					{"recvMsgBtn", recvMsgBtn, &recvClicked},
+					{"acceptBtn", acceptBtn, &acceptClicked},
+					{"cancelBtn", cancelBtn, &cancelClicked},
+				}
+				for _, btn := range btns {
+					for btn.btn.Clicked() {
+						*btn.clicked = true
+					}
 				}
 
-				var sendTextOnce sync.Once
-				for sendTextBtn.Clicked() {
-					sendTextOnce.Do(func() {
+				if sendFileClicked {
+					pickResult = jgo.PickFile(viewEvent)
+				}
+
+				if acceptClicked {
+					select {
+					case confirmChan <- struct{}{}:
+					default:
+					}
+				}
+
+				if cancelClicked {
+					select {
+					case cancelChan <- struct{}{}:
+					default:
+					}
+				}
+
+				if sendTextClicked {
+					func() {
 						key.FocusOp{}.Add(&ops) // blur textfield
 
 						msg := textMsgEditor.Text()
@@ -167,12 +201,12 @@ func (ui *UI) loop(w *app.Window) error {
 							textCodeTxt.SetText("")
 							w.Invalidate()
 						}()
-					})
+					}()
 				}
 
-				var recvOnce sync.Once
-				for recvMsgBtn.Clicked() {
-					recvOnce.Do(func() {
+				if recvClicked {
+					log.Printf("recv clicked")
+					func() {
 						statusMsg.SetText("Start recv")
 						w.Invalidate()
 
@@ -196,7 +230,10 @@ func (ui *UI) loop(w *app.Window) error {
 
 							defer w.Invalidate()
 
-							msg, err := wh.Receive(ctx, code)
+							recvCtx, cancel := context.WithCancel(ctx)
+							defer cancel()
+
+							msg, err := wh.Receive(recvCtx, code)
 							if err != nil {
 								errf("Recv msg err: %s", err)
 								return
@@ -235,8 +272,23 @@ func (ui *UI) loop(w *app.Window) error {
 									return
 								}
 
-								// XXXXX
-								// TODO(PMS): confirm file before recving
+								confirmInProgress = true
+								defer func() {
+									confirmInProgress = false
+								}()
+
+								statusMsg.SetText(fmt.Sprintf("Receiving file (%s)  into %s\nAccept or Cancel?", formatBytes(msg.TransferBytes64), msg.Name))
+
+								w.Invalidate()
+
+								select {
+								case <-cancelChan:
+									msg.Reject()
+									statusMsg.SetText("Transfer rejected")
+									return
+								case <-confirmChan:
+								}
+								confirmInProgress = false
 
 								f, err := os.CreateTemp(dataDir, fmt.Sprintf("%s.tmp", name))
 								if err != nil {
@@ -246,14 +298,22 @@ func (ui *UI) loop(w *app.Window) error {
 								}
 
 								r := newCountReader(msg)
-								stop := make(chan struct{})
+
+								go func() {
+									select {
+									case <-cancelChan:
+										cancel()
+										statusMsg.SetText("Transfer mid-stream aborted")
+									case <-ctx.Done():
+									}
+								}()
 
 								go func() {
 									statusMsg.SetText(fmt.Sprintf("receiving %d/%s", 0, formatBytes(msg.TransferBytes64)))
 									for count := range r.countUpdate {
 										select {
-										case <-stop:
-											break
+										case <-ctx.Done():
+											return
 										default:
 										}
 										statusMsg.SetText(fmt.Sprintf("receiving %s/%s", formatBytes(count), formatBytes(msg.TransferBytes64)))
@@ -265,7 +325,6 @@ func (ui *UI) loop(w *app.Window) error {
 								_, err = io.Copy(f, r)
 								r.Close()
 								if err != nil {
-									close(stop)
 									os.Remove(f.Name())
 									statusMsg.SetText(fmt.Sprintf("Receive file error: %s", err))
 									errf("Receive file error: %s", err)
@@ -291,7 +350,6 @@ func (ui *UI) loop(w *app.Window) error {
 									contentType = http.DetectContentType(header)
 								}
 
-								close(stop)
 								statusMsg.SetText("Receive complete")
 								w.Invalidate()
 
@@ -299,7 +357,7 @@ func (ui *UI) loop(w *app.Window) error {
 								jgo.NotifyDownloadManager(viewEvent, name, path, contentType, msg.TransferBytes64)
 							}
 						}()
-					})
+					}()
 				}
 
 				layout.Inset{
@@ -323,7 +381,14 @@ var (
 	textStat      = new(widget.Editor)
 	sendTextBtn   = new(widget.Clickable)
 
+	acceptBtn = new(widget.Clickable)
+	cancelBtn = new(widget.Clickable)
+
+	cancelChan  = make(chan struct{})
+	confirmChan = make(chan struct{})
+
 	transferInProgress bool
+	confirmInProgress  bool
 
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
@@ -491,6 +556,18 @@ func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				gtx = gtx.Disabled()
 			}
 			return material.Button(th, recvMsgBtn, "Receive").Layout(gtx)
+		},
+		func(gtx C) D {
+			if confirmInProgress {
+				return material.Button(th, acceptBtn, "Accept").Layout(gtx)
+			}
+			return D{}
+		},
+		func(gtx C) D {
+			if transferInProgress || confirmInProgress {
+				return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
+			}
+			return D{}
 		},
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
