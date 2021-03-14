@@ -84,7 +84,21 @@ func (ui *UI) loop(w *app.Window) error {
 					statusMsg.SetText(fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes)))
 					w.Invalidate()
 				}
-				code, status, err := wh.SendFile(ctx, result.Name, f, wormhole.WithProgress(progress))
+
+				sendCtx, cancel := context.WithCancel(ctx)
+
+				go func() {
+					select {
+					case <-cancelChan:
+						cancel()
+						statusMsg.SetText("Transfer mid-stream aborted")
+						sendFileCodeTxt.SetText("")
+						transferInProgress = false
+					case <-ctx.Done():
+					}
+				}()
+
+				code, status, err := wh.SendFile(sendCtx, result.Name, f, wormhole.WithProgress(progress))
 				if err != nil {
 					plog.Printf("wormhole send error err=%s", err)
 					statusMsg.SetText(fmt.Sprintf("wormhole send err: %s", err))
@@ -98,8 +112,9 @@ func (ui *UI) loop(w *app.Window) error {
 				go func() {
 					transferInProgress = true
 					defer func() {
+						cancel()
 						transferInProgress = false
-						recvCodeEditor.SetText("")
+						sendFileCodeTxt.SetText("")
 					}()
 
 					s := <-status
@@ -593,6 +608,12 @@ func drawSendFile(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
 			return CopyEditor(th, sendFileCodeTxt).Layout(gtx)
+		},
+		func(gtx C) D {
+			if transferInProgress || confirmInProgress {
+				return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
+			}
+			return D{}
 		},
 		material.Editor(th, statusMsg, "").Layout,
 	}
