@@ -95,15 +95,6 @@ func (r RichEditorStyle) Layout(gtx C) D {
 	return layout.Flex{Alignment: layout.Middle}.Layout(gtx, children...)
 }
 
-func CopyEditor(th *material.Theme, state *RichEditor) RichEditorStyle {
-	return RichEditorStyle{
-		Theme: th,
-		state: state,
-		copy:  true,
-		Inset: layout.UniformInset(unit.Dp(4)),
-	}
-}
-
 func PasteEditor(th *material.Theme, state *RichEditor, hint string) RichEditorStyle {
 	return RichEditorStyle{
 		Theme: th,

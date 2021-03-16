@@ -392,8 +392,7 @@ func (ui *UI) loop(w *app.Window) error {
 var (
 	textMsgEditor = new(RichEditor)
 	statusMsg     = new(widget.Editor)
-	textCodeTxt   = new(RichEditor)
-	textStat      = new(widget.Editor)
+	textCodeTxt   = new(Copyable)
 	sendTextBtn   = new(widget.Clickable)
 
 	acceptBtn = new(widget.Clickable)
@@ -407,12 +406,12 @@ var (
 
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
-	recvTxtMsg     = new(RichEditor)
+	recvTxtMsg     = new(Copyable)
 	settingsList   = &layout.List{
 		Axis: layout.Vertical,
 	}
 
-	sendFileCodeTxt = new(RichEditor)
+	sendFileCodeTxt = new(Copyable)
 	sendFileBtn     = new(widget.Clickable)
 
 	topLabel = "Wormhole William"
@@ -550,7 +549,7 @@ func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		func(gtx C) D {
 			if textCodeTxt.Text() != "" {
 				gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-				return CopyEditor(th, textCodeTxt).Layout(gtx)
+				return CopyField(th, textCodeTxt).Layout(gtx)
 			}
 			return D{}
 		},
@@ -586,7 +585,7 @@ func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		},
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return CopyEditor(th, recvTxtMsg).Layout(gtx)
+			return CopyField(th, recvTxtMsg).Layout(gtx)
 		},
 		material.Editor(th, statusMsg, "").Layout,
 	}
@@ -607,7 +606,7 @@ func drawSendFile(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		},
 		func(gtx C) D {
 			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return CopyEditor(th, sendFileCodeTxt).Layout(gtx)
+			return CopyField(th, sendFileCodeTxt).Layout(gtx)
 		},
 		func(gtx C) D {
 			if transferInProgress || confirmInProgress {
