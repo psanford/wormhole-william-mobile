@@ -15,6 +15,7 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
+	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/io/system"
 	"gioui.org/layout"
@@ -24,7 +25,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"github.com/psanford/wormhole-william-mobile/jgo"
+	"github.com/psanford/wormhole-william-mobile/internal/picker"
 	"github.com/psanford/wormhole-william-mobile/ui/plog"
 	"github.com/psanford/wormhole-william/wormhole"
 )
@@ -50,13 +51,11 @@ func (ui *UI) loop(w *app.Window) error {
 	th := material.NewTheme(gofont.Collection())
 
 	var (
-		wh  wormhole.Client
-		ctx = context.Background()
-	)
+		wh         wormhole.Client
+		pickResult <-chan picker.PickResult
 
-	var (
-		pickResult <-chan jgo.PickResult
-		viewEvent  app.ViewEvent
+		ctx             = context.Background()
+		platformHandler = newPlatformHandler()
 	)
 
 	var ops op.Ops
@@ -132,8 +131,6 @@ func (ui *UI) loop(w *app.Window) error {
 			switch e := e.(type) {
 			case system.DestroyEvent:
 				return e.Err
-			case app.ViewEvent:
-				viewEvent = e
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
 
@@ -163,7 +160,7 @@ func (ui *UI) loop(w *app.Window) error {
 				}
 
 				if sendFileClicked {
-					pickResult = jgo.PickFile(viewEvent)
+					pickResult = platformHandler.pickFile()
 				}
 
 				if acceptClicked {
@@ -369,7 +366,7 @@ func (ui *UI) loop(w *app.Window) error {
 								w.Invalidate()
 
 								plog.Printf("Call NotifyDownloadManager")
-								jgo.NotifyDownloadManager(viewEvent, name, path, contentType, msg.TransferBytes64)
+								platformHandler.notifyDownloadManager(name, path, contentType, msg.TransferBytes64)
 							}
 						}()
 					}()
@@ -384,6 +381,9 @@ func (ui *UI) loop(w *app.Window) error {
 					return drawTabs(gtx, th)
 				})
 				e.Frame(gtx.Ops)
+
+			default:
+				platformHandler.handleEvent(e)
 			}
 		}
 	}
@@ -634,4 +634,10 @@ func formatBytes(b int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
+}
+
+type platformHandler interface {
+	handleEvent(event.Event)
+	pickFile() <-chan picker.PickResult
+	notifyDownloadManager(name, path, contentType string, size int64)
 }

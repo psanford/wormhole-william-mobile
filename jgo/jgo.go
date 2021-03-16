@@ -13,27 +13,22 @@ import (
 
 	"gioui.org/app"
 	"git.wow.st/gmp/jni"
+	"github.com/psanford/wormhole-william-mobile/internal/picker"
 )
 
 var (
 	pendingResultMux sync.Mutex
-	pendingResult    chan PickResult
+	pendingResult    chan picker.PickResult
 )
 
-type PickResult struct {
-	Path string
-	Name string
-	Err  error
-}
-
-func PickFile(viewEvt app.ViewEvent) <-chan PickResult {
+func PickFile(viewEvt app.ViewEvent) <-chan picker.PickResult {
 	pendingResultMux.Lock()
 	if pendingResult != nil {
-		pendingResult <- PickResult{
+		pendingResult <- picker.PickResult{
 			Err: errors.New("New PickFile has taken precidence"),
 		}
 	}
-	pendingResult = make(chan PickResult, 1)
+	pendingResult = make(chan picker.PickResult, 1)
 	pendingResultMux.Unlock()
 
 	go func() {
@@ -111,7 +106,7 @@ func Java_io_sanford_wormholewilliam_Jni_pickerResult(env *C.JNIEnv, cls C.jclas
 	errStr := jni.GoString(jenv, jni.String(jerr))
 	log.Printf("pickResult path: %s err: %s", path)
 
-	result := PickResult{
+	result := picker.PickResult{
 		Path: path,
 		Name: name,
 	}
