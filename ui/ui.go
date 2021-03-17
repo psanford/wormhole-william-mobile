@@ -186,7 +186,21 @@ func (ui *UI) loop(w *app.Window) error {
 							return
 						}
 
-						code, status, err := wh.SendText(ctx, msg)
+						sendCtx, cancel := context.WithCancel(ctx)
+
+						go func() {
+							select {
+							case <-cancelChan:
+								cancel()
+								statusMsg = "Transfer mid-stream aborted"
+								textCodeTxt.SetText("")
+								transferInProgress = false
+								w.Invalidate()
+							case <-ctx.Done():
+							}
+						}()
+
+						code, status, err := wh.SendText(sendCtx, msg)
 						if err != nil {
 							statusMsg = fmt.Sprintf("Send err: %s", err)
 							plog.Printf("Send err: %s", err)
@@ -538,6 +552,12 @@ var sendTextTab = Tab{
 				if textCodeTxt.Text() != "" {
 					gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
 					return CopyField(th, textCodeTxt).Layout(gtx)
+				}
+				return D{}
+			},
+			func(gtx C) D {
+				if transferInProgress || confirmInProgress {
+					return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
 				}
 				return D{}
 			},
