@@ -4,6 +4,10 @@ This is a Magic Wormhole client for Android. (Perhaps someday this will also sup
 
 At the moment its in beta state. Transfers work although you might experience some rough edges.
 
+Some current limitations:
+- Receiving directories are kept in zip form.
+- Send only supports sending a single file.
+
 ## Building
 
 In order to build this you will need a local install of the android SDK. Set the environment
