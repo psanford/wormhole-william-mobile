@@ -65,7 +65,7 @@ func (ui *UI) loop(w *app.Window) error {
 			pickResult = nil
 			plog.Printf("pick result: path=%s name=%s err=%s", result.Path, result.Name, result.Err)
 			if result.Err != nil {
-				statusMsg.SetText(fmt.Sprintf("Pick file err: %s", result.Err))
+				statusMsg = fmt.Sprintf("Pick file err: %s", result.Err)
 				w.Invalidate()
 				continue
 			}
@@ -74,13 +74,13 @@ func (ui *UI) loop(w *app.Window) error {
 				f, err := os.Open(result.Path)
 				if err != nil {
 					plog.Printf("open file err path=%s err=%s", result.Path, err)
-					statusMsg.SetText(fmt.Sprintf("open file err: %s", err))
+					statusMsg = fmt.Sprintf("open file err: %s", err)
 					w.Invalidate()
 					continue
 				}
 
 				progress := func(sentBytes, totalBytes int64) {
-					statusMsg.SetText(fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes)))
+					statusMsg = fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes))
 					w.Invalidate()
 				}
 
@@ -90,7 +90,7 @@ func (ui *UI) loop(w *app.Window) error {
 					select {
 					case <-cancelChan:
 						cancel()
-						statusMsg.SetText("Transfer mid-stream aborted")
+						statusMsg = "Transfer mid-stream aborted"
 						sendFileCodeTxt.SetText("")
 						transferInProgress = false
 					case <-ctx.Done():
@@ -100,13 +100,13 @@ func (ui *UI) loop(w *app.Window) error {
 				code, status, err := wh.SendFile(sendCtx, result.Name, f, wormhole.WithProgress(progress))
 				if err != nil {
 					plog.Printf("wormhole send error err=%s", err)
-					statusMsg.SetText(fmt.Sprintf("wormhole send err: %s", err))
+					statusMsg = fmt.Sprintf("wormhole send err: %s", err)
 					w.Invalidate()
 					continue
 				}
 
 				sendFileCodeTxt.SetText(code)
-				statusMsg.SetText("Waiting for receiver...")
+				statusMsg = "Waiting for receiver..."
 
 				go func() {
 					transferInProgress = true
@@ -119,9 +119,9 @@ func (ui *UI) loop(w *app.Window) error {
 					s := <-status
 					if s.Error != nil {
 
-						statusMsg.SetText(fmt.Sprintf("wormhole send err: %s", s.Error))
+						statusMsg = fmt.Sprintf("wormhole send err: %s", s.Error)
 					} else {
-						statusMsg.SetText("Send Complete!")
+						statusMsg = "Send Complete!"
 						sendFileCodeTxt.SetText("")
 					}
 					w.Invalidate()
@@ -188,12 +188,12 @@ func (ui *UI) loop(w *app.Window) error {
 
 						code, status, err := wh.SendText(ctx, msg)
 						if err != nil {
-							statusMsg.SetText(fmt.Sprintf("Send err: %s", err))
+							statusMsg = fmt.Sprintf("Send err: %s", err)
 							plog.Printf("Send err: %s", err)
 							return
 						}
 
-						statusMsg.SetText("Waiting for receiver...")
+						statusMsg = "Waiting for receiver..."
 						textCodeTxt.SetText(code)
 
 						go func() {
@@ -205,10 +205,10 @@ func (ui *UI) loop(w *app.Window) error {
 
 							s := <-status
 							if s.Error != nil {
-								statusMsg.SetText(fmt.Sprintf("Send error: %s", s.Error))
+								statusMsg = fmt.Sprintf("Send error: %s", s.Error)
 								plog.Printf("Send error: %s", s.Error)
 							} else if s.OK {
-								statusMsg.SetText("OK!")
+								statusMsg = "OK!"
 							}
 							textCodeTxt.SetText("")
 							w.Invalidate()
@@ -219,7 +219,7 @@ func (ui *UI) loop(w *app.Window) error {
 				if recvClicked {
 					log.Printf("recv clicked")
 					func() {
-						statusMsg.SetText("Start recv")
+						statusMsg = "Start recv"
 						w.Invalidate()
 
 						key.FocusOp{}.Add(&ops) // blur textfield
@@ -229,7 +229,7 @@ func (ui *UI) loop(w *app.Window) error {
 						}
 
 						errf := func(msg string, args ...interface{}) {
-							statusMsg.SetText(fmt.Sprintf(msg, args...))
+							statusMsg = fmt.Sprintf(msg, args...)
 							plog.Printf(msg, args...)
 						}
 
@@ -289,14 +289,14 @@ func (ui *UI) loop(w *app.Window) error {
 									confirmInProgress = false
 								}()
 
-								statusMsg.SetText(fmt.Sprintf("Receiving file (%s)  into %s\nAccept or Cancel?", formatBytes(msg.TransferBytes64), msg.Name))
+								statusMsg = fmt.Sprintf("Receiving file (%s)  into %s\nAccept or Cancel?", formatBytes(msg.TransferBytes64), msg.Name)
 
 								w.Invalidate()
 
 								select {
 								case <-cancelChan:
 									msg.Reject()
-									statusMsg.SetText("Transfer rejected")
+									statusMsg = "Transfer rejected"
 									return
 								case <-confirmChan:
 								}
@@ -315,20 +315,20 @@ func (ui *UI) loop(w *app.Window) error {
 									select {
 									case <-cancelChan:
 										cancel()
-										statusMsg.SetText("Transfer mid-stream aborted")
+										statusMsg = "Transfer mid-stream aborted"
 									case <-ctx.Done():
 									}
 								}()
 
 								go func() {
-									statusMsg.SetText(fmt.Sprintf("receiving %d/%s", 0, formatBytes(msg.TransferBytes64)))
+									statusMsg = fmt.Sprintf("receiving %d/%s", 0, formatBytes(msg.TransferBytes64))
 									for count := range r.countUpdate {
 										select {
 										case <-ctx.Done():
 											return
 										default:
 										}
-										statusMsg.SetText(fmt.Sprintf("receiving %s/%s", formatBytes(count), formatBytes(msg.TransferBytes64)))
+										statusMsg = fmt.Sprintf("receiving %s/%s", formatBytes(count), formatBytes(msg.TransferBytes64))
 										w.Invalidate()
 										time.Sleep(500 * time.Millisecond)
 									}
@@ -338,7 +338,7 @@ func (ui *UI) loop(w *app.Window) error {
 								r.Close()
 								if err != nil {
 									os.Remove(f.Name())
-									statusMsg.SetText(fmt.Sprintf("Receive file error: %s", err))
+									statusMsg = fmt.Sprintf("Receive file error: %s", err)
 									errf("Receive file error: %s", err)
 									return
 								}
@@ -362,7 +362,7 @@ func (ui *UI) loop(w *app.Window) error {
 									contentType = http.DetectContentType(header)
 								}
 
-								statusMsg.SetText("Receive complete")
+								statusMsg = "Receive complete"
 								w.Invalidate()
 
 								plog.Printf("Call NotifyDownloadManager")
@@ -391,7 +391,6 @@ func (ui *UI) loop(w *app.Window) error {
 
 var (
 	textMsgEditor = new(RichEditor)
-	statusMsg     = new(widget.Editor)
 	textCodeTxt   = new(Copyable)
 	sendTextBtn   = new(widget.Clickable)
 
@@ -401,6 +400,7 @@ var (
 	cancelChan  = make(chan struct{})
 	confirmChan = make(chan struct{})
 
+	statusMsg          string
 	transferInProgress bool
 	confirmInProgress  bool
 
@@ -418,15 +418,9 @@ var (
 
 	tabs = Tabs{
 		tabs: []Tab{
-			{
-				Title: "Recv",
-			},
-			{
-				Title: "Send Text",
-			},
-			{
-				Title: "Send File",
-			},
+			recvTab,
+			sendTextTab,
+			sendFileTab,
 		},
 	}
 )
@@ -442,6 +436,7 @@ type Tabs struct {
 type Tab struct {
 	btn   widget.Clickable
 	Title string
+	draw  func(gtx layout.Context, th *material.Theme) layout.Dimensions
 }
 
 type (
@@ -452,7 +447,9 @@ type (
 func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			return material.H4(th, topLabel).Layout(gtx)
+			return layout.UniformInset(unit.Sp(12)).Layout(gtx,
+				material.H4(th, topLabel).Layout,
+			)
 		}),
 		layout.Rigid(func(gtx C) D {
 			return tabs.list.Layout(gtx, len(tabs.tabs), func(gtx C, tabIdx int) D {
@@ -492,19 +489,8 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		}),
 		layout.Flexed(1, func(gtx C) D {
 			return slider.Layout(gtx, func(gtx C) D {
-				selected := tabs.tabs[tabs.selected].Title
-				switch selected {
-				case "Send Text":
-					return drawSendText(gtx, th)
-				case "Send File":
-					return drawSendFile(gtx, th)
-				case "Recv":
-					return drawRecv(gtx, th)
-				default:
-					return layout.Center.Layout(gtx,
-						material.H1(th, fmt.Sprintf("Tab content %s", selected)).Layout,
-					)
-				}
+				selectedTab := tabs.tabs[tabs.selected]
+				return selectedTab.draw(gtx, th)
 			})
 		}),
 	)
@@ -530,96 +516,148 @@ func textField(gtx layout.Context, th *material.Theme, label, hint string, edito
 	}
 }
 
-func drawSendText(gtx layout.Context, th *material.Theme) layout.Dimensions {
-	widgets := []layout.Widget{
-		textField(gtx, th, "Text", "Message", textMsgEditor),
+var sendTextTab = Tab{
+	Title: "Send Text",
+	draw: func(gtx layout.Context, th *material.Theme) layout.Dimensions {
+		widgets := []layout.Widget{
+			textField(gtx, th, "Text", "Message", textMsgEditor),
 
-		func(gtx C) D {
-			if transferInProgress {
-				gtx = gtx.Disabled()
-			}
-			return material.Button(th, sendTextBtn, "Send").Layout(gtx)
-		},
-		func(gtx C) D {
-			if textCodeTxt.Text() != "" {
-				return material.H6(th, "Code:").Layout(gtx)
-			}
-			return D{}
-		},
-		func(gtx C) D {
-			if textCodeTxt.Text() != "" {
+			func(gtx C) D {
+				if transferInProgress {
+					gtx = gtx.Disabled()
+				}
+				return material.Button(th, sendTextBtn, "Send").Layout(gtx)
+			},
+			func(gtx C) D {
+				if textCodeTxt.Text() != "" {
+					return material.H6(th, "Code:").Layout(gtx)
+				}
+				return D{}
+			},
+			func(gtx C) D {
+				if textCodeTxt.Text() != "" {
+					gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
+					return CopyField(th, textCodeTxt).Layout(gtx)
+				}
+				return D{}
+			},
+		}
+
+		return layout.Flex{
+			Axis: layout.Vertical,
+		}.Layout(gtx,
+			layout.Flexed(0.9, func(gtx layout.Context) layout.Dimensions {
+				return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
+				})
+			}),
+			layout.Rigid(drawStatus(th)),
+		)
+	},
+}
+
+var recvTab = Tab{
+	Title: "Recv",
+	draw: func(gtx layout.Context, th *material.Theme) layout.Dimensions {
+		widgets := []layout.Widget{
+			textField(gtx, th, "Code", "Code", recvCodeEditor),
+
+			func(gtx C) D {
+				if transferInProgress {
+					gtx = gtx.Disabled()
+				}
+				return material.Button(th, recvMsgBtn, "Receive").Layout(gtx)
+			},
+			func(gtx C) D {
+				if confirmInProgress {
+					return material.Button(th, acceptBtn, "Accept").Layout(gtx)
+				}
+				return D{}
+			},
+			func(gtx C) D {
+				if transferInProgress || confirmInProgress {
+					return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
+				}
+				return D{}
+			},
+			func(gtx C) D {
+				gtx.Constraints.Max.Y = gtx.Px(unit.Dp(200))
+				return CopyField(th, recvTxtMsg).Layout(gtx)
+			},
+		}
+
+		return layout.Flex{
+			Axis: layout.Vertical,
+		}.Layout(gtx,
+			layout.Flexed(0.9, func(gtx layout.Context) layout.Dimensions {
+				return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
+				})
+			}),
+			layout.Rigid(drawStatus(th)),
+		)
+	},
+}
+
+func drawStatus(th *material.Theme) func(gtx layout.Context) layout.Dimensions {
+	return func(gtx layout.Context) layout.Dimensions {
+		return layout.Stack{}.Layout(gtx,
+			layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+				if statusMsg == "" {
+					return layout.Dimensions{}
+				}
+
+				size := image.Point{
+					X: gtx.Constraints.Max.X,
+					Y: gtx.Constraints.Min.Y,
+				}
+
+				return ColorBox(gtx, size, lightYellow)
+			}),
+			layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+				// gtx.Constraints.Min.Y = gtx.Px(unit.Dp(20))
+				return layout.UniformInset(unit.Dp(16)).Layout(gtx,
+					material.Body1(th, statusMsg).Layout,
+				)
+			}),
+		)
+	}
+}
+
+var sendFileTab = Tab{
+	Title: "Send File",
+	draw: func(gtx layout.Context, th *material.Theme) layout.Dimensions {
+		widgets := []layout.Widget{
+
+			func(gtx C) D {
+				if transferInProgress {
+					gtx = gtx.Disabled()
+				}
+				return material.Button(th, sendFileBtn, "Choose File").Layout(gtx)
+			},
+			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-				return CopyField(th, textCodeTxt).Layout(gtx)
-			}
-			return D{}
-		},
-		material.Editor(th, statusMsg, "").Layout,
-	}
+				return CopyField(th, sendFileCodeTxt).Layout(gtx)
+			},
+			func(gtx C) D {
+				if transferInProgress || confirmInProgress {
+					return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
+				}
+				return D{}
+			},
+		}
 
-	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
-		return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
-	})
-}
-
-func drawRecv(gtx layout.Context, th *material.Theme) layout.Dimensions {
-	widgets := []layout.Widget{
-		textField(gtx, th, "Code", "Code", recvCodeEditor),
-
-		func(gtx C) D {
-			if transferInProgress {
-				gtx = gtx.Disabled()
-			}
-			return material.Button(th, recvMsgBtn, "Receive").Layout(gtx)
-		},
-		func(gtx C) D {
-			if confirmInProgress {
-				return material.Button(th, acceptBtn, "Accept").Layout(gtx)
-			}
-			return D{}
-		},
-		func(gtx C) D {
-			if transferInProgress || confirmInProgress {
-				return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
-			}
-			return D{}
-		},
-		func(gtx C) D {
-			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return CopyField(th, recvTxtMsg).Layout(gtx)
-		},
-		material.Editor(th, statusMsg, "").Layout,
-	}
-
-	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
-		return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
-	})
-}
-
-func drawSendFile(gtx layout.Context, th *material.Theme) layout.Dimensions {
-	widgets := []layout.Widget{
-
-		func(gtx C) D {
-			if transferInProgress {
-				gtx = gtx.Disabled()
-			}
-			return material.Button(th, sendFileBtn, "Choose File").Layout(gtx)
-		},
-		func(gtx C) D {
-			gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
-			return CopyField(th, sendFileCodeTxt).Layout(gtx)
-		},
-		func(gtx C) D {
-			if transferInProgress || confirmInProgress {
-				return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
-			}
-			return D{}
-		},
-		material.Editor(th, statusMsg, "").Layout,
-	}
-
-	return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
-		return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
-	})
+		return layout.Flex{
+			Axis: layout.Vertical,
+		}.Layout(gtx,
+			layout.Flexed(0.9, func(gtx layout.Context) layout.Dimensions {
+				return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
+				})
+			}),
+			layout.Rigid(drawStatus(th)),
+		)
+	},
 }
 
 func formatBytes(b int64) string {
@@ -639,4 +677,22 @@ type platformHandler interface {
 	handleEvent(event.Event)
 	pickFile() <-chan picker.PickResult
 	notifyDownloadManager(name, path, contentType string, size int64)
+}
+
+// Test colors.
+var (
+	background  = color.NRGBA{R: 0xC0, G: 0xC0, B: 0xC0, A: 0xFF}
+	red         = color.NRGBA{R: 0xC0, G: 0x40, B: 0x40, A: 0xFF}
+	green       = color.NRGBA{R: 0x40, G: 0xC0, B: 0x40, A: 0xFF}
+	blue        = color.NRGBA{R: 0x40, G: 0x40, B: 0xC0, A: 0xFF}
+	lightYellow = color.NRGBA{R: 0xFF, G: 0xFE, B: 0xE3, A: 0xFF}
+)
+
+// ColorBox creates a widget with the specified dimensions and color.
+func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Dimensions {
+	defer op.Save(gtx.Ops).Load()
+	clip.Rect{Max: size}.Add(gtx.Ops)
+	paint.ColorOp{Color: color}.Add(gtx.Ops)
+	paint.PaintOp{}.Add(gtx.Ops)
+	return layout.Dimensions{Size: size}
 }
