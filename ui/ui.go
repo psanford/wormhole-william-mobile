@@ -334,11 +334,15 @@ func (ui *UI) loop(w *app.Window) error {
 									}
 								}()
 
+								stopRecvUpdater := make(chan struct{})
+
 								go func() {
 									statusMsg = fmt.Sprintf("receiving %d/%s", 0, formatBytes(msg.TransferBytes64))
 									for count := range r.countUpdate {
 										select {
 										case <-ctx.Done():
+											return
+										case <-stopRecvUpdater:
 											return
 										default:
 										}
@@ -352,7 +356,7 @@ func (ui *UI) loop(w *app.Window) error {
 								r.Close()
 								if err != nil {
 									os.Remove(f.Name())
-									statusMsg = fmt.Sprintf("Receive file error: %s", err)
+									close(stopRecvUpdater)
 									errf("Receive file error: %s", err)
 									return
 								}
@@ -365,6 +369,7 @@ func (ui *UI) loop(w *app.Window) error {
 
 								err = os.Rename(tmpName, path)
 								if err != nil {
+									close(stopRecvUpdater)
 									errf("Rename file err: %s", err)
 									return
 								}
@@ -376,11 +381,12 @@ func (ui *UI) loop(w *app.Window) error {
 									contentType = http.DetectContentType(header)
 								}
 
-								statusMsg = "Receive complete"
-								w.Invalidate()
-
 								plog.Printf("Call NotifyDownloadManager")
 								platformHandler.notifyDownloadManager(name, path, contentType, msg.TransferBytes64)
+
+								close(stopRecvUpdater)
+								statusMsg = "Receive complete"
+								w.Invalidate()
 							}
 						}()
 					}()
