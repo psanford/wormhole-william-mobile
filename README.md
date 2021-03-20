@@ -2,11 +2,18 @@
 
 This is a Magic Wormhole client for Android. (Perhaps someday this will also support iOS).
 
-At the moment its in beta state. Transfers work although you might experience some rough edges.
-
 Some current limitations:
 - Receiving directories are kept in zip form.
 - Send only supports sending a single file.
+
+## Installing the APK
+
+Prebuilt APKs are provided with each release. You can install this to an android device
+that has developer mode enabled by running:
+
+```
+apk install wormhole-william.release.apk
+```
 
 ## Building
 
