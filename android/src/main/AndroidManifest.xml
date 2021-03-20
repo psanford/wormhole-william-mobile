@@ -6,7 +6,7 @@
   <uses-feature android:glEsVersion="0x00020000" android:required="false"/>
   <uses-feature android:name="android.hardware.type.pc" android:required="false"/>
 
-  <application android:debuggable="true" android:label="Wormhole William" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">
+  <application android:label="Wormhole William" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">
     <activity
         android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
         android:label="Wormhole William"
