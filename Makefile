@@ -1,4 +1,3 @@
-PLATFORM_JAR=$(ANDROID_HOME)/platforms/android-30/android.jar
 AAR=android/libs/wormhole-william.aar
 BUILDTOOLS=$(ANDROID_SDK_ROOT)/build-tools/30.0.3
 ZIPALIGN=$(BUILDTOOLS)/zipalign
@@ -15,12 +14,6 @@ wormhole-william.release.apk: $(AAR)
 	$(APKSIGNER) sign --ks $(SIGNKEY) --out $@ wormhole-william-unsigned-aligned.apk
 	rm wormhole-william-unsigned-aligned.apk
 
-$(AAR): $(shell find . -name '*.go' -o -name '*.java' -type f) jgo.jar
+$(AAR): $(shell find . -name '*.go' -o -name '*.java' -type f)
 	mkdir -p $(@D)
-	go run gioui.org/cmd/gogio -buildmode archive -target android -appid io.sanford.wormhole_william -o $@ .
-
-jgo.jar: $(wildcard jgo/*.java)
-	mkdir -p classes
-	javac -cp "$(PLATFORM_JAR)" -d classes $^
-	jar cf $@ -C classes .
-	rm -rf classes
+	go run gioui.org/cmd/gogio -buildmode archive -target android -minsdk 22 -appid io.sanford.wormhole_william -o $@ .
