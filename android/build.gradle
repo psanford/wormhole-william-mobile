@@ -1,0 +1,40 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.6.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        flatDir {
+            dirs 'libs'
+        }
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    ndkVersion "21.3.6528147"
+    compileSdkVersion 29
+    defaultConfig {
+        minSdkVersion 22
+        targetSdkVersion 29
+        versionCode 28
+        versionName "1.0.0"
+    }
+    compileOptions {
+        sourceCompatibility 1.8
+        targetCompatibility 1.8
+    }
+}
+
+dependencies {
+    implementation ':wormhole-william@aar'
+}

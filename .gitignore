@@ -1,3 +1,6 @@
-wormhole-william-mobile
-wormhole-william-mobile.apk
-wormhole-william-mobile.apk.idsig
+*.apk
+*.apk.idsig
+jgo.jar
+android/build/
+android/.gradle
+android/libs/
