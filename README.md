@@ -8,6 +8,9 @@ Some current limitations:
 
 ## Installing the APK
 
+Available from the Play store:
+https://play.google.com/store/apps/details?id=io.sanford.wormhole_william
+
 Prebuilt APKs are provided with each release. You can install this to an android device
 that has developer mode enabled by running:
 
