@@ -17,3 +17,7 @@ wormhole-william.release.apk: $(AAR)
 $(AAR): $(shell find . -name '*.go' -o -name '*.java' -type f)
 	mkdir -p $(@D)
 	go run gioui.org/cmd/gogio -buildmode archive -target android -minsdk 22 -appid io.sanford.wormhole_william -o $@ .
+
+.PHONY: clean
+clean:
+	rm -f $(AAR) wormhole-william.debug.apk wormhole-william.release.apk
