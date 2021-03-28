@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"gioui.org/app"
@@ -25,6 +27,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/psanford/wormhole-william-mobile/config"
 	"github.com/psanford/wormhole-william-mobile/internal/picker"
 	"github.com/psanford/wormhole-william-mobile/ui/plog"
 	"github.com/psanford/wormhole-william/wormhole"
@@ -32,6 +35,7 @@ import (
 
 type UI struct {
 	wormholeClient wormhole.Client
+	conf           *config.Config
 }
 
 func New() *UI {
@@ -48,68 +52,19 @@ func (ui *UI) Run() error {
 	return nil
 }
 
-func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string) {
-	if path != "" {
-		f, err := os.Open(path)
-		if err != nil {
-			plog.Printf("open file err path=%s err=%s", path, err)
-			statusMsg = fmt.Sprintf("open file err: %s", err)
-			w.Invalidate()
-			return
-		}
-
-		progress := func(sentBytes, totalBytes int64) {
-			statusMsg = fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes))
-			w.Invalidate()
-		}
-
-		sendCtx, cancel := context.WithCancel(ctx)
-
-		go func() {
-			select {
-			case <-cancelChan:
-				cancel()
-				statusMsg = "Transfer mid-stream aborted"
-				sendFileCodeTxt.SetText("")
-				transferInProgress = false
-			case <-ctx.Done():
-			}
-		}()
-
-		code, status, err := ui.wormholeClient.SendFile(sendCtx, filename, f, wormhole.WithProgress(progress))
-		if err != nil {
-			plog.Printf("wormhole send error err=%s", err)
-			statusMsg = fmt.Sprintf("wormhole send err: %s", err)
-			w.Invalidate()
-			return
-		}
-
-		sendFileCodeTxt.SetText(code)
-		statusMsg = "Waiting for receiver..."
-
-		go func() {
-			transferInProgress = true
-			defer func() {
-				cancel()
-				transferInProgress = false
-				sendFileCodeTxt.SetText("")
-			}()
-
-			s := <-status
-			if s.Error != nil {
-
-				statusMsg = fmt.Sprintf("wormhole send err: %s", s.Error)
-			} else {
-				statusMsg = "Send Complete!"
-				sendFileCodeTxt.SetText("")
-			}
-			w.Invalidate()
-		}()
-	}
-}
-
 func (ui *UI) loop(w *app.Window) error {
 	th := material.NewTheme(gofont.Collection())
+
+	dataDir, _ := app.DataDir()
+	conf := config.Load(dataDir)
+	ui.conf = conf
+
+	ui.wormholeClient.RendezvousURL = conf.RendezvousURL
+	rendezvousEditor.SetText(conf.RendezvousURL)
+	ui.wormholeClient.PassPhraseComponentLength = conf.CodeLen
+	if conf.CodeLen > 0 {
+		codeLenEditor.SetText(strconv.Itoa(conf.CodeLen))
+	}
 
 	var (
 		pickResult <-chan picker.PickResult
@@ -180,6 +135,21 @@ func (ui *UI) loop(w *app.Window) error {
 				for _, btn := range btns {
 					for btn.btn.Clicked() {
 						*btn.clicked = true
+					}
+				}
+
+				if rendezvousEditor.Text() != conf.RendezvousURL {
+					conf.RendezvousURL = rendezvousEditor.Text()
+					conf.Save()
+					ui.wormholeClient.RendezvousURL = conf.RendezvousURL
+				}
+				codeLenStr := strconv.Itoa(conf.CodeLen)
+				if codeLenEditor.Text() != codeLenStr {
+					n, _ := strconv.Atoi(strings.TrimSpace(codeLenEditor.Text()))
+					if n > 0 {
+						conf.CodeLen = n
+						conf.Save()
+						ui.wormholeClient.PassPhraseComponentLength = conf.CodeLen
 					}
 				}
 
@@ -433,10 +403,79 @@ func (ui *UI) loop(w *app.Window) error {
 	}
 }
 
+func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string) {
+	if path != "" {
+		f, err := os.Open(path)
+		if err != nil {
+			plog.Printf("open file err path=%s err=%s", path, err)
+			statusMsg = fmt.Sprintf("open file err: %s", err)
+			w.Invalidate()
+			return
+		}
+		defer os.Remove(path)
+
+		progress := func(sentBytes, totalBytes int64) {
+			statusMsg = fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes))
+			w.Invalidate()
+		}
+
+		sendCtx, cancel := context.WithCancel(ctx)
+
+		go func() {
+			select {
+			case <-cancelChan:
+				cancel()
+				statusMsg = "Transfer mid-stream aborted"
+				sendFileCodeTxt.SetText("")
+				transferInProgress = false
+			case <-ctx.Done():
+			}
+		}()
+
+		code, status, err := ui.wormholeClient.SendFile(sendCtx, filename, f, wormhole.WithProgress(progress))
+		if err != nil {
+			plog.Printf("wormhole send error err=%s", err)
+			statusMsg = fmt.Sprintf("wormhole send err: %s", err)
+			w.Invalidate()
+			return
+		}
+
+		sendFileCodeTxt.SetText(code)
+		statusMsg = "Waiting for receiver..."
+
+		go func() {
+			transferInProgress = true
+			defer func() {
+				cancel()
+				transferInProgress = false
+				sendFileCodeTxt.SetText("")
+			}()
+
+			s := <-status
+			if s.Error != nil {
+
+				statusMsg = fmt.Sprintf("wormhole send err: %s", s.Error)
+			} else {
+				statusMsg = "Send Complete!"
+				sendFileCodeTxt.SetText("")
+			}
+			w.Invalidate()
+		}()
+	}
+}
+
 var (
 	textMsgEditor = new(RichEditor)
 	textCodeTxt   = new(Copyable)
 	sendTextBtn   = new(widget.Clickable)
+
+	rendezvousEditor = &widget.Editor{
+		SingleLine: true,
+	}
+
+	codeLenEditor = &widget.Editor{
+		SingleLine: true,
+	}
 
 	acceptBtn = new(widget.Clickable)
 	cancelBtn = new(widget.Clickable)
@@ -451,7 +490,7 @@ var (
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
 	recvTxtMsg     = new(Copyable)
-	settingsList   = &layout.List{
+	itemList       = &layout.List{
 		Axis: layout.Vertical,
 	}
 
@@ -465,6 +504,7 @@ var (
 			recvTab,
 			sendTextTab,
 			sendFileTab,
+			settingsTab,
 		},
 	}
 )
@@ -597,7 +637,7 @@ var sendTextTab = Tab{
 			Axis: layout.Vertical,
 		}.Layout(gtx,
 			layout.Flexed(0.9, func(gtx layout.Context) layout.Dimensions {
-				return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+				return itemList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
 				})
 			}),
@@ -640,7 +680,7 @@ var recvTab = Tab{
 			Axis: layout.Vertical,
 		}.Layout(gtx,
 			layout.Flexed(0.9, func(gtx layout.Context) layout.Dimensions {
-				return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+				return itemList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
 				})
 			}),
@@ -701,12 +741,46 @@ var sendFileTab = Tab{
 			Axis: layout.Vertical,
 		}.Layout(gtx,
 			layout.Flexed(0.9, func(gtx layout.Context) layout.Dimensions {
-				return settingsList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+				return itemList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
 				})
 			}),
 			layout.Rigid(drawStatus(th)),
 		)
+	},
+}
+
+var settingsTab = Tab{
+	Title: "Settings",
+	draw: func(gtx layout.Context, th *material.Theme) layout.Dimensions {
+		textField := func(label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
+			return func(gtx layout.Context) layout.Dimensions {
+				flex := layout.Flex{
+					Axis: layout.Vertical,
+				}
+				return flex.Layout(gtx,
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						return material.H5(th, label).Layout(gtx)
+					}),
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						e := material.Editor(th, editor, hint)
+						border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
+						return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
+						})
+					}),
+				)
+			}
+		}
+
+		widgets := []layout.Widget{
+			textField("Rendezvous URL", wormhole.DefaultRendezvousURL, rendezvousEditor),
+			textField("Code Length", "2", codeLenEditor),
+		}
+
+		return itemList.Layout(gtx, len(widgets), func(gtx layout.Context, i int) layout.Dimensions {
+			return layout.UniformInset(unit.Dp(16)).Layout(gtx, widgets[i])
+		})
 	},
 }
 
