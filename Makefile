@@ -14,7 +14,7 @@ wormhole-william.release.apk: $(AAR)
 	$(APKSIGNER) sign --ks $(SIGNKEY) --out $@ wormhole-william-unsigned-aligned.apk
 	rm wormhole-william-unsigned-aligned.apk
 
-$(AAR): $(shell find . -name '*.go' -o -name '*.java' -type f)
+$(AAR): $(shell find . -name '*.go' -o -name '*.java' -o -name '*.xml' -type f)
 	mkdir -p $(@D)
 	go run gioui.org/cmd/gogio -buildmode archive -target android -minsdk 22 -appid io.sanford.wormhole_william -o $@ .
 

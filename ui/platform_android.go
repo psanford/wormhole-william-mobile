@@ -29,3 +29,7 @@ func (a *androidPlatform) notifyDownloadManager(name, path, contentType string, 
 	jgo.NotifyDownloadManager(a.viewEvent, name, path, contentType, size)
 
 }
+
+func (d *androidPlatform) sharedEventCh() chan picker.SharedEvent {
+	return jgo.GetSharedEventCh()
+}

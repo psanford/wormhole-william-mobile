@@ -11,6 +11,7 @@ import (
 	"errors"
 	"log"
 	"sync"
+	"time"
 	"unsafe"
 
 	"gioui.org/app"
@@ -19,19 +20,21 @@ import (
 )
 
 var (
-	pendingResultMux sync.Mutex
-	pendingResult    chan picker.PickResult
+	globalStateMux sync.Mutex
+	pendingResult  chan picker.PickResult
+
+	sharedEventCh chan picker.SharedEvent
 )
 
 func PickFile(viewEvt app.ViewEvent) <-chan picker.PickResult {
-	pendingResultMux.Lock()
+	globalStateMux.Lock()
 	if pendingResult != nil {
 		pendingResult <- picker.PickResult{
 			Err: errors.New("New PickFile has taken precidence"),
 		}
 	}
 	pendingResult = make(chan picker.PickResult, 1)
-	pendingResultMux.Unlock()
+	globalStateMux.Unlock()
 
 	go func() {
 		jvm := jni.JVMFor(app.JavaVM())
@@ -116,8 +119,48 @@ func Java_io_sanford_wormholewilliam_Jni_pickerResult(env *C.JNIEnv, cls C.jclas
 		result.Err = errors.New(errStr)
 	}
 
-	pendingResultMux.Lock()
+	globalStateMux.Lock()
 	pendingResult <- result
 	pendingResult = nil
-	pendingResultMux.Unlock()
+	globalStateMux.Unlock()
+}
+
+func GetSharedEventCh() chan picker.SharedEvent {
+	globalStateMux.Lock()
+	defer globalStateMux.Unlock()
+	if sharedEventCh == nil {
+		sharedEventCh = make(chan picker.SharedEvent)
+	}
+	return sharedEventCh
+}
+
+//export Java_io_sanford_wormholewilliam_Share_gotSharedItem
+func Java_io_sanford_wormholewilliam_Share_gotSharedItem(env *C.JNIEnv, cls C.jclass, jType, jPathOrText, jFilename C.jstring) {
+
+	ch := GetSharedEventCh()
+
+	jenv := jni.EnvFor(uintptr(unsafe.Pointer(env)))
+
+	typ := jni.GoString(jenv, jni.String(jType))
+	pathOrText := jni.GoString(jenv, jni.String(jPathOrText))
+	filename := jni.GoString(jenv, jni.String(jFilename))
+
+	var result picker.SharedEvent
+	if typ == "text" {
+		result.Type = picker.Text
+		result.Text = pathOrText
+	} else if typ == "file" {
+		result.Type = picker.File
+		result.Path = pathOrText
+		result.Name = filename
+	} else {
+		log.Printf("unknown sharedEvent type: %s", typ)
+		return
+	}
+
+	select {
+	case ch <- result:
+	case <-time.After(10 * time.Second):
+		log.Printf("sharedEvent send timeout")
+	}
 }
