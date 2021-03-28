@@ -29,3 +29,7 @@ func (d *dummyPlatform) pickFile() <-chan picker.PickResult {
 
 func (d *dummyPlatform) notifyDownloadManager(name, path, contentType string, size int64) {
 }
+
+func (d *dummyPlatform) sharedEventCh() chan picker.SharedEvent {
+	return nil
+}

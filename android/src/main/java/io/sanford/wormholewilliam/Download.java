@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.lang.String;
 
 
-
 public class Download extends Fragment {
   private String path;
   private String name;

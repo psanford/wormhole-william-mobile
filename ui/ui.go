@@ -31,6 +31,7 @@ import (
 )
 
 type UI struct {
+	wormholeClient wormhole.Client
 }
 
 func New() *UI {
@@ -47,11 +48,70 @@ func (ui *UI) Run() error {
 	return nil
 }
 
+func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string) {
+	if path != "" {
+		f, err := os.Open(path)
+		if err != nil {
+			plog.Printf("open file err path=%s err=%s", path, err)
+			statusMsg = fmt.Sprintf("open file err: %s", err)
+			w.Invalidate()
+			return
+		}
+
+		progress := func(sentBytes, totalBytes int64) {
+			statusMsg = fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes))
+			w.Invalidate()
+		}
+
+		sendCtx, cancel := context.WithCancel(ctx)
+
+		go func() {
+			select {
+			case <-cancelChan:
+				cancel()
+				statusMsg = "Transfer mid-stream aborted"
+				sendFileCodeTxt.SetText("")
+				transferInProgress = false
+			case <-ctx.Done():
+			}
+		}()
+
+		code, status, err := ui.wormholeClient.SendFile(sendCtx, filename, f, wormhole.WithProgress(progress))
+		if err != nil {
+			plog.Printf("wormhole send error err=%s", err)
+			statusMsg = fmt.Sprintf("wormhole send err: %s", err)
+			w.Invalidate()
+			return
+		}
+
+		sendFileCodeTxt.SetText(code)
+		statusMsg = "Waiting for receiver..."
+
+		go func() {
+			transferInProgress = true
+			defer func() {
+				cancel()
+				transferInProgress = false
+				sendFileCodeTxt.SetText("")
+			}()
+
+			s := <-status
+			if s.Error != nil {
+
+				statusMsg = fmt.Sprintf("wormhole send err: %s", s.Error)
+			} else {
+				statusMsg = "Send Complete!"
+				sendFileCodeTxt.SetText("")
+			}
+			w.Invalidate()
+		}()
+	}
+}
+
 func (ui *UI) loop(w *app.Window) error {
 	th := material.NewTheme(gofont.Collection())
 
 	var (
-		wh         wormhole.Client
 		pickResult <-chan picker.PickResult
 
 		ctx             = context.Background()
@@ -61,6 +121,26 @@ func (ui *UI) loop(w *app.Window) error {
 	var ops op.Ops
 	for {
 		select {
+		case shareEvt := <-platformHandler.sharedEventCh():
+			if shareEvt.Type == picker.Text {
+				textMsgEditor.SetText(shareEvt.Text)
+				for idx, tab := range tabs.tabs {
+					if tab.Title == "Send Text" {
+						tabs.selected = idx
+						break
+					}
+				}
+			} else if shareEvt.Type == picker.File {
+				for idx, tab := range tabs.tabs {
+					if tab.Title == "Send File" {
+						tabs.selected = idx
+						break
+					}
+				}
+
+				ui.sendFile(ctx, w, shareEvt.Path, shareEvt.Name)
+			}
+
 		case result := <-pickResult:
 			pickResult = nil
 			plog.Printf("pick result: path=%s name=%s err=%s", result.Path, result.Name, result.Err)
@@ -70,63 +150,7 @@ func (ui *UI) loop(w *app.Window) error {
 				continue
 			}
 
-			if result.Path != "" {
-				f, err := os.Open(result.Path)
-				if err != nil {
-					plog.Printf("open file err path=%s err=%s", result.Path, err)
-					statusMsg = fmt.Sprintf("open file err: %s", err)
-					w.Invalidate()
-					continue
-				}
-
-				progress := func(sentBytes, totalBytes int64) {
-					statusMsg = fmt.Sprintf("Send progress %s/%s", formatBytes(sentBytes), formatBytes(totalBytes))
-					w.Invalidate()
-				}
-
-				sendCtx, cancel := context.WithCancel(ctx)
-
-				go func() {
-					select {
-					case <-cancelChan:
-						cancel()
-						statusMsg = "Transfer mid-stream aborted"
-						sendFileCodeTxt.SetText("")
-						transferInProgress = false
-					case <-ctx.Done():
-					}
-				}()
-
-				code, status, err := wh.SendFile(sendCtx, result.Name, f, wormhole.WithProgress(progress))
-				if err != nil {
-					plog.Printf("wormhole send error err=%s", err)
-					statusMsg = fmt.Sprintf("wormhole send err: %s", err)
-					w.Invalidate()
-					continue
-				}
-
-				sendFileCodeTxt.SetText(code)
-				statusMsg = "Waiting for receiver..."
-
-				go func() {
-					transferInProgress = true
-					defer func() {
-						cancel()
-						transferInProgress = false
-						sendFileCodeTxt.SetText("")
-					}()
-
-					s := <-status
-					if s.Error != nil {
-
-						statusMsg = fmt.Sprintf("wormhole send err: %s", s.Error)
-					} else {
-						statusMsg = "Send Complete!"
-						sendFileCodeTxt.SetText("")
-					}
-					w.Invalidate()
-				}()
-			}
+			ui.sendFile(ctx, w, result.Path, result.Name)
 		case e := <-w.Events():
 			switch e := e.(type) {
 			case system.DestroyEvent:
@@ -200,7 +224,7 @@ func (ui *UI) loop(w *app.Window) error {
 							}
 						}()
 
-						code, status, err := wh.SendText(sendCtx, msg)
+						code, status, err := ui.wormholeClient.SendText(sendCtx, msg)
 						if err != nil {
 							statusMsg = fmt.Sprintf("Send err: %s", err)
 							plog.Printf("Send err: %s", err)
@@ -259,7 +283,7 @@ func (ui *UI) loop(w *app.Window) error {
 							recvCtx, cancel := context.WithCancel(ctx)
 							defer cancel()
 
-							msg, err := wh.Receive(recvCtx, code)
+							msg, err := ui.wormholeClient.Receive(recvCtx, code)
 							if err != nil {
 								errf("Recv msg err: %s", err)
 								return
@@ -702,6 +726,7 @@ func formatBytes(b int64) string {
 type platformHandler interface {
 	handleEvent(event.Event)
 	pickFile() <-chan picker.PickResult
+	sharedEventCh() chan picker.SharedEvent
 	notifyDownloadManager(name, path, contentType string, size int64)
 }
 

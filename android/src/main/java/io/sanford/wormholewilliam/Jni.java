@@ -85,7 +85,6 @@ public class Jni extends Fragment {
         }
       }
 
-
       String tmpFileName = String.valueOf(System.currentTimeMillis());
       File destFile = new File(cacheDir, tmpFileName);
 
