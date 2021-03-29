@@ -20,10 +20,10 @@ import (
 )
 
 var (
-	globalStateMux sync.Mutex
-	pendingResult  chan picker.PickResult
-
-	sharedEventCh chan picker.SharedEvent
+	globalStateMux      sync.Mutex
+	pendingResult       chan picker.PickResult
+	pendingQRScanResult chan string
+	sharedEventCh       chan picker.SharedEvent
 )
 
 func PickFile(viewEvt app.ViewEvent) <-chan picker.PickResult {
@@ -101,6 +101,42 @@ func NotifyDownloadManager(viewEvt app.ViewEvent, name, path, contentType string
 	}()
 }
 
+func ScanQRCode(viewEvt app.ViewEvent) chan string {
+	globalStateMux.Lock()
+	pendingQRScanResult = make(chan string, 1)
+	globalStateMux.Unlock()
+
+	go func() {
+		jvm := jni.JVMFor(app.JavaVM())
+		err := jni.Do(jvm, func(env jni.Env) error {
+			var uptr = app.AppContext()
+			appCtx := *(*jni.Object)(unsafe.Pointer(&uptr))
+			loader := jni.ClassLoaderFor(env, appCtx)
+			cls, err := jni.LoadClass(env, loader, "io.sanford.wormholewilliam.Scan")
+			if err != nil {
+				log.Printf("Load io.sanford.wormholewilliam.Scan error: %s", err)
+			}
+
+			mid := jni.GetMethodID(env, cls, "<init>", "()V")
+
+			inst, err := jni.NewObject(env, cls, mid)
+			if err != nil {
+				log.Printf("NewObject err: %s", err)
+			}
+			sig := "(Landroid/view/View;)V"
+
+			mid = jni.GetMethodID(env, cls, "register", sig)
+
+			return jni.CallVoidMethod(env, inst, mid, jni.Value(viewEvt.View))
+		})
+		if err != nil {
+			log.Printf("ScnQRCode jvm err: %s", err)
+		}
+	}()
+
+	return pendingQRScanResult
+}
+
 //export Java_io_sanford_wormholewilliam_Jni_pickerResult
 func Java_io_sanford_wormholewilliam_Jni_pickerResult(env *C.JNIEnv, cls C.jclass, jpath, jname, jerr C.jstring) {
 
@@ -162,5 +198,25 @@ func Java_io_sanford_wormholewilliam_Share_gotSharedItem(env *C.JNIEnv, cls C.jc
 	case ch <- result:
 	case <-time.After(10 * time.Second):
 		log.Printf("sharedEvent send timeout")
+	}
+}
+
+//export Java_io_sanford_wormholewilliam_Scan_scanResult
+func Java_io_sanford_wormholewilliam_Scan_scanResult(env *C.JNIEnv, cls C.jclass, jCode C.jstring) {
+	globalStateMux.Lock()
+	defer globalStateMux.Unlock()
+	if pendingQRScanResult == nil {
+		return
+	}
+
+	jenv := jni.EnvFor(uintptr(unsafe.Pointer(env)))
+	code := jni.GoString(jenv, jni.String(jCode))
+
+	log.Printf("scan code result: %s", code)
+
+	select {
+	case pendingQRScanResult <- code:
+	case <-time.After(10 * time.Second):
+		log.Printf("pendingQRScanResult send timeout")
 	}
 }

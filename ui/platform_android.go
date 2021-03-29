@@ -30,6 +30,10 @@ func (a *androidPlatform) notifyDownloadManager(name, path, contentType string, 
 
 }
 
-func (d *androidPlatform) sharedEventCh() chan picker.SharedEvent {
+func (a *androidPlatform) sharedEventCh() chan picker.SharedEvent {
 	return jgo.GetSharedEventCh()
+}
+
+func (a *androidPlatform) scanQRCode() <-chan string {
+	return jgo.ScanQRCode(a.viewEvent)
 }

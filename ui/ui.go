@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -9,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -67,7 +69,8 @@ func (ui *UI) loop(w *app.Window) error {
 	}
 
 	var (
-		pickResult <-chan picker.PickResult
+		pickResult   <-chan picker.PickResult
+		qrCodeResult <-chan string
 
 		ctx             = context.Background()
 		platformHandler = newPlatformHandler()
@@ -76,6 +79,19 @@ func (ui *UI) loop(w *app.Window) error {
 	var ops op.Ops
 	for {
 		select {
+		case code := <-qrCodeResult:
+			if code != "" {
+
+				parsed, err := parseCodeURI(code)
+				if err != nil {
+					statusMsg = fmt.Sprintf("invalid code: %s", err)
+					continue
+				}
+
+				recvCodeEditor.SetText(parsed.code)
+				w.Invalidate()
+			}
+			qrCodeResult = nil
 		case shareEvt := <-platformHandler.sharedEventCh():
 			if shareEvt.Type == picker.Text {
 				textMsgEditor.SetText(shareEvt.Text)
@@ -117,6 +133,7 @@ func (ui *UI) loop(w *app.Window) error {
 					sendFileClicked bool
 					sendTextClicked bool
 					recvClicked     bool
+					scanQRClicked   bool
 					acceptClicked   bool
 					cancelClicked   bool
 				)
@@ -129,6 +146,7 @@ func (ui *UI) loop(w *app.Window) error {
 					{"sendFileBtn", sendFileBtn, &sendFileClicked},
 					{"sendTextBtn", sendTextBtn, &sendTextClicked},
 					{"recvMsgBtn", recvMsgBtn, &recvClicked},
+					{"scanQRBtn", scanQRBtn, &scanQRClicked},
 					{"acceptBtn", acceptBtn, &acceptClicked},
 					{"cancelBtn", cancelBtn, &cancelClicked},
 				}
@@ -151,6 +169,10 @@ func (ui *UI) loop(w *app.Window) error {
 						conf.Save()
 						ui.wormholeClient.PassPhraseComponentLength = conf.CodeLen
 					}
+				}
+
+				if scanQRClicked {
+					qrCodeResult = platformHandler.scanQRCode()
 				}
 
 				if sendFileClicked {
@@ -489,6 +511,7 @@ var (
 
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
+	scanQRBtn      = new(widget.Clickable)
 	recvTxtMsg     = new(Copyable)
 	itemList       = &layout.List{
 		Axis: layout.Vertical,
@@ -653,6 +676,12 @@ var recvTab = Tab{
 			textField(gtx, th, "Code", "Code", recvCodeEditor),
 
 			func(gtx C) D {
+				if transferInProgress || recvCodeEditor.Text() != "" {
+					gtx = gtx.Disabled()
+				}
+				return material.Button(th, scanQRBtn, "Scan QR Code").Layout(gtx)
+			},
+			func(gtx C) D {
 				if transferInProgress {
 					gtx = gtx.Disabled()
 				}
@@ -802,6 +831,7 @@ type platformHandler interface {
 	pickFile() <-chan picker.PickResult
 	sharedEventCh() chan picker.SharedEvent
 	notifyDownloadManager(name, path, contentType string, size int64)
+	scanQRCode() <-chan string
 }
 
 // Test colors.
@@ -820,4 +850,32 @@ func ColorBox(gtx layout.Context, size image.Point, color color.NRGBA) layout.Di
 	paint.ColorOp{Color: color}.Add(gtx.Ops)
 	paint.PaintOp{}.Add(gtx.Ops)
 	return layout.Dimensions{Size: size}
+}
+
+type parsedCode struct {
+	relay string
+	code  string
+}
+
+func parseCodeURI(codeStr string) (*parsedCode, error) {
+	if !strings.HasPrefix(codeStr, "wormhole:") {
+		return nil, errors.New("not a wormhole code")
+	}
+
+	u := strings.TrimPrefix(codeStr, "wormhole:")
+
+	url, err := url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
+
+	code := url.Query().Get("code")
+	if code == "" {
+		return nil, errors.New("no code")
+	}
+
+	return &parsedCode{
+		relay: url.Host,
+		code:  code,
+	}, nil
 }
