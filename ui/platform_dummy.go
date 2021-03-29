@@ -33,3 +33,7 @@ func (d *dummyPlatform) notifyDownloadManager(name, path, contentType string, si
 func (d *dummyPlatform) sharedEventCh() chan picker.SharedEvent {
 	return nil
 }
+
+func (d *dummyPlatform) scanQRCode() <-chan string {
+	return nil
+}
