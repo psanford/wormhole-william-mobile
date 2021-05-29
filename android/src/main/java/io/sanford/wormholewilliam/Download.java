@@ -52,7 +52,6 @@ public class Download extends Fragment {
     Log.d("wormhole", "Download: onAttach()");
 
     File toFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), name);
-
     File fromFile = new File(path);
 
     FileInputStream inStream = null;
@@ -77,7 +76,7 @@ public class Download extends Fragment {
           outStream.close();
         }
       } catch (IOException ignored) {}
-      Log.d("wormhole", "Download: copy file error");
+      Log.d("wormhole", "Download: copy file error: " + e.toString());
     }
 
     DownloadManager manager = (DownloadManager) ctx.getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
