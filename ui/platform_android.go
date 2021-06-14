@@ -29,11 +29,14 @@ func (a *androidPlatform) notifyDownloadManager(name, path, contentType string, 
 	jgo.NotifyDownloadManager(a.viewEvent, name, path, contentType, size)
 
 }
-
 func (a *androidPlatform) sharedEventCh() chan picker.SharedEvent {
 	return jgo.GetSharedEventCh()
 }
 
 func (a *androidPlatform) scanQRCode() <-chan string {
 	return jgo.ScanQRCode(a.viewEvent)
+}
+
+func (a *androidPlatform) requestWriteFilePerm() <-chan picker.PermResult {
+	return jgo.RequestWriteFilePermission(a.viewEvent)
 }
