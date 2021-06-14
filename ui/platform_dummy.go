@@ -37,3 +37,12 @@ func (d *dummyPlatform) sharedEventCh() chan picker.SharedEvent {
 func (d *dummyPlatform) scanQRCode() <-chan string {
 	return nil
 }
+
+func (d *dummyPlatform) requestWriteFilePerm() <-chan picker.PermResult {
+	ch := make(chan picker.PermResult, 1)
+	ch <- picker.PermResult{
+		Authorized: true,
+	}
+
+	return ch
+}

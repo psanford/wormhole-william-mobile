@@ -71,6 +71,7 @@ func (ui *UI) loop(w *app.Window) error {
 	var (
 		pickResult   <-chan picker.PickResult
 		qrCodeResult <-chan string
+		permResultCh <-chan picker.PermResult
 
 		ctx             = context.Background()
 		platformHandler = newPlatformHandler()
@@ -122,6 +123,19 @@ func (ui *UI) loop(w *app.Window) error {
 			}
 
 			ui.sendFile(ctx, w, result.Path, result.Name)
+
+		case permResult := <-permResultCh:
+			permResultCh = nil
+			if permResult.Err != nil {
+				statusMsg = fmt.Sprintf("Write file permission not granted, err: %s", permResult.Err)
+				w.Invalidate()
+				continue
+			}
+			select {
+			case hasPermissionChan <- permResult.Authorized:
+			case <-time.After(5 * time.Second):
+				plog.Printf("write hasPermissionChan timed out")
+			}
 		case e := <-w.Events():
 			switch e := e.(type) {
 			case system.DestroyEvent:
@@ -319,7 +333,7 @@ func (ui *UI) loop(w *app.Window) error {
 									confirmInProgress = false
 								}()
 
-								statusMsg = fmt.Sprintf("Receiving file (%s)  into %s\nAccept or Cancel?", formatBytes(msg.TransferBytes64), msg.Name)
+								statusMsg = fmt.Sprintf("Receiving file (%s) into %s\nAccept or Cancel?", formatBytes(msg.TransferBytes64), msg.Name)
 
 								w.Invalidate()
 
@@ -331,6 +345,20 @@ func (ui *UI) loop(w *app.Window) error {
 								case <-confirmChan:
 								}
 								confirmInProgress = false
+
+								permResultCh = platformHandler.requestWriteFilePerm()
+								select {
+								case <-cancelChan:
+									msg.Reject()
+									statusMsg = "Transfer rejected"
+									return
+								case hasPermission := <-hasPermissionChan:
+									if !hasPermission {
+										msg.Reject()
+										statusMsg = "Transfer rejected"
+										return
+									}
+								}
 
 								f, err := os.CreateTemp(dataDir, fmt.Sprintf("%s.tmp", name))
 								if err != nil {
@@ -502,8 +530,9 @@ var (
 	acceptBtn = new(widget.Clickable)
 	cancelBtn = new(widget.Clickable)
 
-	cancelChan  = make(chan struct{})
-	confirmChan = make(chan struct{})
+	cancelChan        = make(chan struct{})
+	confirmChan       = make(chan struct{})
+	hasPermissionChan = make(chan bool)
 
 	statusMsg          string
 	transferInProgress bool
@@ -832,6 +861,7 @@ type platformHandler interface {
 	sharedEventCh() chan picker.SharedEvent
 	notifyDownloadManager(name, path, contentType string, size int64)
 	scanQRCode() <-chan string
+	requestWriteFilePerm() <-chan picker.PermResult
 }
 
 // Test colors.

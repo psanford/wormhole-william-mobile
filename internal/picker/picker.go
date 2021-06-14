@@ -19,3 +19,8 @@ type SharedEvent struct {
 	Name string
 	Text string
 }
+
+type PermResult struct {
+	Authorized bool
+	Err        error
+}
