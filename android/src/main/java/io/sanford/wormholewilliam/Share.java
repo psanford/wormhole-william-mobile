@@ -81,8 +81,12 @@ public class Share extends Activity {
       out = new FileOutputStream(destFile);
 
       byte[] buffer = new byte[1024];
-      while (in.read(buffer) > 0) {
-        out.write(buffer);
+      while (true) {
+        int amt = in.read(buffer);
+        if (amt < 1) {
+          break;
+        }
+        out.write(buffer, 0, amt);
       }
       out.close();
       in.close();
@@ -102,7 +106,7 @@ public class Share extends Activity {
         }
       } catch (IOException ignored) {}
     }
-    Log.d("wormehole", "Share() read file error");
+    Log.d("wormhole", "Share() read file error");
     finish();
   }
 

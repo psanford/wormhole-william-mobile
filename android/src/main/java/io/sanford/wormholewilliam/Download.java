@@ -62,8 +62,12 @@ public class Download extends Fragment {
       inStream = new FileInputStream(fromFile);
 
       byte[] buffer = new byte[1024];
-      while (inStream.read(buffer) > 0) {
-        outStream.write(buffer);
+      while (true) {
+        int amt = inStream.read(buffer);
+        if (amt < 1) {
+          break;
+        }
+        outStream.write(buffer, 0, amt);
       }
       outStream.close();
       inStream.close();
