@@ -87,29 +87,27 @@ func (s *Slider) Layout(gtx layout.Context, w layout.Widget) layout.Dimensions {
 		return dims
 	}
 
-	defer op.Save(gtx.Ops).Load()
-
 	offset := smooth(s.offset)
 
 	if s.offset > 0 {
-		op.Offset(f32.Point{
+		defer op.Offset(f32.Point{
 			X: float32(dims.Size.X) * (offset - 1),
-		}).Add(gtx.Ops)
+		}).Push(gtx.Ops).Pop()
 		s.lastCall.Add(gtx.Ops)
 
-		op.Offset(f32.Point{
+		defer op.Offset(f32.Point{
 			X: float32(dims.Size.X),
-		}).Add(gtx.Ops)
+		}).Push(gtx.Ops).Pop()
 		s.nextCall.Add(gtx.Ops)
 	} else {
-		op.Offset(f32.Point{
+		defer op.Offset(f32.Point{
 			X: float32(dims.Size.X) * (offset + 1),
-		}).Add(gtx.Ops)
+		}).Push(gtx.Ops).Pop()
 		s.lastCall.Add(gtx.Ops)
 
-		op.Offset(f32.Point{
+		defer op.Offset(f32.Point{
 			X: float32(-dims.Size.X),
-		}).Add(gtx.Ops)
+		}).Push(gtx.Ops).Pop()
 		s.nextCall.Add(gtx.Ops)
 	}
 	return dims
