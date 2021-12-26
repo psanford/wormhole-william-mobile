@@ -64,7 +64,7 @@ func (r CopyableStyle) Layout(gtx C) D {
 
 	if r.copy && r.state.text != "" {
 		children = append(children, layout.Rigid(func(gtx C) D {
-			return r.Inset.Layout(gtx, material.IconButton(r.Theme, &r.state.copyButton, CopyIcon).Layout)
+			return r.Inset.Layout(gtx, material.IconButton(r.Theme, &r.state.copyButton, CopyIcon, "Copy").Layout)
 		}))
 	}
 

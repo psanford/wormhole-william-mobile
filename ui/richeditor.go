@@ -75,7 +75,7 @@ func (r RichEditorStyle) Layout(gtx C) D {
 	children := make([]layout.FlexChild, 0, 2)
 	if r.copy && r.state.Editor.Text() != "" {
 		children = append(children, layout.Rigid(func(gtx C) D {
-			return r.Inset.Layout(gtx, material.IconButton(r.Theme, &r.state.copyButton, CopyIcon).Layout)
+			return r.Inset.Layout(gtx, material.IconButton(r.Theme, &r.state.copyButton, CopyIcon, "Copy").Layout)
 		}))
 	}
 
@@ -87,7 +87,7 @@ func (r RichEditorStyle) Layout(gtx C) D {
 
 	if r.paste {
 		children = append(children, layout.Rigid(func(gtx C) D {
-			return r.Inset.Layout(gtx, material.IconButton(r.Theme, &r.state.pasteButton, PasteIcon).Layout)
+			return r.Inset.Layout(gtx, material.IconButton(r.Theme, &r.state.pasteButton, PasteIcon, "Paste").Layout)
 		}))
 	}
 
