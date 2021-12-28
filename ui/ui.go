@@ -436,14 +436,7 @@ func (ui *UI) loop(w *app.Window) error {
 					}()
 				}
 
-				layout.Inset{
-					Bottom: e.Insets.Bottom,
-					Left:   e.Insets.Left,
-					Right:  e.Insets.Right,
-					Top:    e.Insets.Top,
-				}.Layout(gtx, func(gtx C) D {
-					return drawTabs(gtx, th)
-				})
+				drawTabs(gtx, th)
 				e.Frame(gtx.Ops)
 
 			default:
