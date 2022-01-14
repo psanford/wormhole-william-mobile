@@ -31,6 +31,12 @@ Run `make` and see what happens!
 This project uses https://gioui.org/ for its UI. It uses https://github.com/psanford/wormhole-william
 for the underlying wormhole implementation.
 
+## Video Demo
+
+This [demo](https://www.youtube.com/watch/FOY4vhUoikU?t=210s) was done as part of a larger talk on the development of Wormhole William Mobile and its use of [Gio](https://gioui.org/):
+
+[![Wormhole William Mobile Demo](https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/wormhole-william-mobile-youtube.png?raw=true)](https://www.youtube.com/watch/FOY4vhUoikU?t=210s "Wormhole William Demo")
+
 ## Screenshots
 
 <img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv1.png?raw=true" alt="Receive 1" width="200" />
