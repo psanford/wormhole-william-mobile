@@ -36,7 +36,7 @@ public class WriteFilePerm extends Fragment {
 
   @Override public void onAttach(Context ctx) {
     super.onAttach(ctx);
-    Log.d("wormhole", "WireFilePerm: onAttach()");
+    Log.d("wormhole", "WriteFilePerm: onAttach()");
     if (ctx.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
       requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
     } else {
@@ -52,7 +52,7 @@ public class WriteFilePerm extends Fragment {
 
   @Override
   public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-    Log.d("wormhole", "WireFilePerm: onRequestPermissionsResult");
+    Log.d("wormhole", "WriteFilePerm: onRequestPermissionsResult");
     if (requestCode == PERMISSION_REQUEST) {
       boolean granted = true;
       for (int x : grantResults) {
@@ -62,9 +62,9 @@ public class WriteFilePerm extends Fragment {
         }
       }
       if (!granted) {
-        Log.d("wormhole", "WireFilePerm: permissions not granted");
+        Log.d("wormhole", "WriteFilePerm: permissions not granted");
       } else{
-        Log.d("wormhole", "WireFilePerm: permissions granted");
+        Log.d("wormhole", "WriteFilePerm: permissions granted");
       }
 
       permissionResult(granted);
