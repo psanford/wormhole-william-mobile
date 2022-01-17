@@ -68,6 +68,8 @@ func (ui *UI) loop(w *app.Window) error {
 		codeLenEditor.SetText(strconv.Itoa(conf.CodeLen))
 	}
 
+	recvCodeEditor.SingleLine = true
+
 	var (
 		pickResult   <-chan picker.PickResult
 		qrCodeResult <-chan string
@@ -434,6 +436,20 @@ func (ui *UI) loop(w *app.Window) error {
 							}
 						}()
 					}()
+				}
+
+				for _, e := range recvCodeEditor.Events() {
+					if _, ok := e.(widget.ChangeEvent); ok {
+						orig := recvCodeEditor.Text()
+						new := strings.ReplaceAll(orig, " ", "-")
+						new = strings.ReplaceAll(new, "\n", "")
+
+						if new != orig {
+							_, col := recvCodeEditor.CaretPos()
+							recvCodeEditor.SetText(new)
+							recvCodeEditor.MoveCaret(col, col)
+						}
+					}
 				}
 
 				drawTabs(gtx, th)
