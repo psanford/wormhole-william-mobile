@@ -13,10 +13,10 @@ cloud.google.com/go/storage v1.0.0/go.mod h1:IhtSnM/ZTZV8YYJWCY8RULGVqBDmpoyjwiy
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20201218220906-28db891af037/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 gioui.org v0.0.0-20211110142422-303b81953991/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
-gioui.org v0.0.0-20220131180029-7204632c39d4 h1:U32jWptv5WOmkoNyVQlXHk8+4gK7xBjlR87LspNUMpg=
-gioui.org v0.0.0-20220131180029-7204632c39d4/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
-gioui.org/cmd v0.0.0-20220131180029-7204632c39d4 h1:eQeYWfzlSmyLxpK6B0Fy4YuCASeyc+cKHyH+XozK1gU=
-gioui.org/cmd v0.0.0-20220131180029-7204632c39d4/go.mod h1:bH6HiOnaLVXwKxDBQyhZOC97zcDIZBvl0PUxmIRtEGw=
+gioui.org v0.0.0-20220223143639-7f90f04c074d h1:CxdCPb9xyqL0nJHtyS+s8+Cff34AOLc3zJYayy+TBaA=
+gioui.org v0.0.0-20220223143639-7f90f04c074d/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
+gioui.org/cmd v0.0.0-20220223143639-7f90f04c074d h1:6UZ7+52B89+iTOjPx+soW3NhiRhazR3BRRZzFu1Af1c=
+gioui.org/cmd v0.0.0-20220223143639-7f90f04c074d/go.mod h1:bH6HiOnaLVXwKxDBQyhZOC97zcDIZBvl0PUxmIRtEGw=
 gioui.org/cpu v0.0.0-20210808092351-bfe733dd3334/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=
 gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 h1:AGDDxsJE1RpcXTAxPG2B4jrwVUJGFDjINIPi1jtO6pc=
 gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=
