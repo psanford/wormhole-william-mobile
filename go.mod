@@ -5,6 +5,7 @@ go 1.16
 require (
 	gioui.org v0.0.0-20221023001956-9f62230c380f
 	gioui.org/cmd v0.0.0-20220818080936-02068d6340fc
+	gioui.org/x v0.0.0-20221026194128-5b5772968c5c
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -17,3 +18,5 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 	salsa.debian.org/vasudev/gospake2 v0.0.0-20210510093858-d91629950ad1 // indirect
 )
+
+replace gioui.org/x => /Users/psanford/projects/thirdparty/gio-x

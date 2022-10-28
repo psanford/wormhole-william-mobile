@@ -29,6 +29,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/explorer"
 	"github.com/psanford/wormhole-william-mobile/config"
 	"github.com/psanford/wormhole-william-mobile/internal/picker"
 	"github.com/psanford/wormhole-william-mobile/ui/plog"
@@ -61,6 +62,8 @@ func (ui *UI) loop(w *app.Window) error {
 	conf := config.Load(dataDir)
 	ui.conf = conf
 
+	fileExplorer := explorer.NewExplorer(w)
+
 	ui.wormholeClient.RendezvousURL = conf.RendezvousURL
 	rendezvousEditor.SetText(conf.RendezvousURL)
 	ui.wormholeClient.PassPhraseComponentLength = conf.CodeLen
@@ -76,7 +79,7 @@ func (ui *UI) loop(w *app.Window) error {
 		permResultCh <-chan picker.PermResult
 
 		ctx             = context.Background()
-		platformHandler = newPlatformHandler()
+		platformHandler = newPlatformHandler(fileExplorer)
 	)
 
 	var ops op.Ops
@@ -125,6 +128,7 @@ func (ui *UI) loop(w *app.Window) error {
 			}
 
 			ui.sendFile(ctx, w, result.Path, result.Name)
+			w.Invalidate()
 
 		case permResult := <-permResultCh:
 			permResultCh = nil
@@ -139,6 +143,7 @@ func (ui *UI) loop(w *app.Window) error {
 				plog.Printf("write hasPermissionChan timed out")
 			}
 		case e := <-w.Events():
+			fileExplorer.ListenEvents(e)
 			switch e := e.(type) {
 			case system.DestroyEvent:
 				return e.Err
@@ -501,6 +506,7 @@ func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string
 
 		sendFileCodeTxt.SetText(code)
 		statusMsg = "Waiting for receiver..."
+		w.Invalidate()
 
 		go func() {
 			transferInProgress = true

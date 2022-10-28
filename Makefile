@@ -18,11 +18,23 @@ $(AAR): $(shell find . -name '*.go' -o -name '*.java' -o -name '*.xml' -type f)
 	mkdir -p $(@D)
 	go run gioui.org/cmd/gogio -buildmode archive -target android -appid io.sanford.wormhole_william -o $@ .
 
-wormholewilliam.app:
-	go run gioui.org/cmd/gogio -o wormholewilliam.app -target ios .
+.PHONY: wormholewilliam.app
+wormholewilliam.app: $(shell find . -name '*.go' -o -name '*.plist' -type f)
+	./gogio -work -o wormholewilliam.app -target ios .
+
+wormholewilliam.ipa: $(shell find . -name '*.go' -o -name '*.plist' -type f)
+	./gogio -o wormholewilliam.ipa -target ios -appid io.sanford.wormholewilliam .
+
+.PHONY: iphone
+iphone: wormholewilliam.ipa
+	ideviceinstaller -i wormholewilliam.ipa
 
 .PHONY: ios
 ios: wormholewilliam.app
+
+.PHONE: iossim
+iossim: wormholewilliam.app
+	xcrun simctl install booted wormholewilliam.app
 
 .PHONY: clean
 clean:
