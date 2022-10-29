@@ -592,7 +592,7 @@ type (
 func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			return layout.UniformInset(unit.Sp(12)).Layout(gtx,
+			return layout.UniformInset(unit.Dp(12)).Layout(gtx,
 				material.H4(th, topLabel).Layout,
 			)
 		}),
@@ -611,7 +611,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				return layout.Stack{Alignment: layout.S}.Layout(gtx,
 					layout.Stacked(func(gtx C) D {
 						dims := material.Clickable(gtx, &t.btn, func(gtx C) D {
-							return layout.UniformInset(unit.Sp(12)).Layout(gtx,
+							return layout.UniformInset(unit.Dp(12)).Layout(gtx,
 								material.H6(th, t.Title).Layout,
 							)
 						})
@@ -622,7 +622,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 						if tabs.selected != tabIdx {
 							return layout.Dimensions{}
 						}
-						tabHeight := gtx.Px(unit.Dp(4))
+						tabHeight := gtx.Dp(4)
 						tabRect := image.Rect(0, 0, tabWidth, tabHeight)
 						paint.FillShape(gtx.Ops, th.Palette.ContrastBg, clip.Rect(tabRect).Op())
 						return layout.Dimensions{
@@ -652,7 +652,7 @@ func textField(gtx layout.Context, th *material.Theme, label, hint string, edito
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				e := PasteEditor(th, editor, hint)
-				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
+				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Dp(2)}
 				return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
 				})
@@ -681,7 +681,7 @@ var sendTextTab = Tab{
 			},
 			func(gtx C) D {
 				if textCodeTxt.Text() != "" {
-					gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
+					gtx.Constraints.Max.Y = gtx.Dp(400)
 					return CopyField(th, textCodeTxt).Layout(gtx)
 				}
 				return D{}
@@ -738,7 +738,7 @@ var recvTab = Tab{
 				return D{}
 			},
 			func(gtx C) D {
-				gtx.Constraints.Max.Y = gtx.Px(unit.Dp(200))
+				gtx.Constraints.Max.Y = gtx.Dp(200)
 				return CopyField(th, recvTxtMsg).Layout(gtx)
 			},
 		}
@@ -793,7 +793,7 @@ var sendFileTab = Tab{
 				return material.Button(th, sendFileBtn, "Choose File").Layout(gtx)
 			},
 			func(gtx C) D {
-				gtx.Constraints.Max.Y = gtx.Px(unit.Dp(400))
+				gtx.Constraints.Max.Y = gtx.Dp(400)
 				return CopyField(th, sendFileCodeTxt).Layout(gtx)
 			},
 			func(gtx C) D {
@@ -831,7 +831,7 @@ var settingsTab = Tab{
 					}),
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						e := material.Editor(th, editor, hint)
-						border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Px(2)}
+						border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Dp(2)}
 						return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
 						})
