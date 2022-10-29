@@ -27,6 +27,24 @@ type iosPlatform struct {
 func (d *iosPlatform) handleEvent(e event.Event) {
 }
 
+func (d *iosPlatform) saveFileToDocuments(src *os.File, dataDir, name string) (string, error) {
+	w, err := d.exp.CreateFile(name)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = io.Copy(w, src)
+	if err != nil {
+		return "", fmt.Errorf("save final file err: %w", err)
+	}
+
+	return "", w.Close()
+}
+
+func (d *iosPlatform) dstFilePathClear(dataDir, name string) error {
+	return nil
+}
+
 func (d *iosPlatform) pickFile() <-chan picker.PickResult {
 	ch := make(chan picker.PickResult, 1)
 	go func() {

@@ -44,3 +44,21 @@ func (a *androidPlatform) requestWriteFilePerm() <-chan picker.PermResult {
 func (d *androidPlatform) supportedFeatures() platformFeature {
 	return supportsQRScanning
 }
+
+func (d *androidPlatform) dstFilePathClear(dataDir, name string) error {
+	path := filepath.Join(dataDir, name)
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("Error refusing to overwrite existing '%s'", path)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("Error stat'ing existing '%s'\n", path)
+	}
+
+	return nil
+}
+
+func (d *androidPlatform) saveFileToDocuments(src *os.File, dataDir, name string) (string, error) {
+	path := filepath.Join(dataDir, name)
+
+	err = os.Rename(src.Name(), path)
+	return path, err
+}

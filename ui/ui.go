@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -326,14 +325,10 @@ func (ui *UI) loop(w *app.Window) error {
 									name += ".zip"
 								}
 
-								path := filepath.Join(dataDir, name)
-								if _, err := os.Stat(name); err == nil {
+								err = platformHandler.dstFilePathClear(dataDir, name)
+								if err != nil {
 									msg.Reject()
-									errf("Error refusing to overwrite existing '%s'", name)
-									return
-								} else if !os.IsNotExist(err) {
-									msg.Reject()
-									errf("Error stat'ing existing '%s'\n", name)
+									errf(err.Error())
 									return
 								}
 
@@ -414,13 +409,14 @@ func (ui *UI) loop(w *app.Window) error {
 									return
 								}
 
-								tmpName := f.Name()
 								f.Seek(0, io.SeekStart)
 								header := make([]byte, 512)
 								io.ReadFull(f, header)
-								f.Close()
 
-								err = os.Rename(tmpName, path)
+								f.Seek(0, io.SeekStart)
+
+								path, err := platformHandler.saveFileToDocuments(f, dataDir, name)
+								f.Close()
 								if err != nil {
 									close(stopRecvUpdater)
 									errf("Rename file err: %s", err)
@@ -886,6 +882,8 @@ type platformHandler interface {
 	scanQRCode() <-chan string
 	requestWriteFilePerm() <-chan picker.PermResult
 	supportedFeatures() platformFeature
+	dstFilePathClear(dataDir, name string) error
+	saveFileToDocuments(src *os.File, dataDir, name string) (string, error)
 }
 
 // Test colors.

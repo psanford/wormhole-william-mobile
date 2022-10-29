@@ -5,6 +5,9 @@ package ui
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 
 	"gioui.org/io/event"
 	"github.com/psanford/wormhole-william-mobile/internal/picker"
@@ -50,4 +53,22 @@ func (d *dummyPlatform) requestWriteFilePerm() <-chan picker.PermResult {
 
 func (d *dummyPlatform) supportedFeatures() platformFeature {
 	return 0
+}
+
+func (d *dummyPlatform) dstFilePathClear(dataDir, name string) error {
+	path := filepath.Join(dataDir, name)
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("Error refusing to overwrite existing '%s'", path)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("Error stat'ing existing '%s'\n", path)
+	}
+
+	return nil
+}
+
+func (d *dummyPlatform) saveFileToDocuments(src *os.File, dataDir, name string) (string, error) {
+	path := filepath.Join(dataDir, name)
+
+	err := os.Rename(src.Name(), path)
+	return path, err
 }
