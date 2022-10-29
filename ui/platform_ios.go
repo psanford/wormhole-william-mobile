@@ -3,8 +3,8 @@ package ui
 import (
 	"fmt"
 	"io"
-	"os"
 	"net/url"
+	"os"
 	"path/filepath"
 
 	"gioui.org/app"
@@ -64,7 +64,6 @@ func (d *iosPlatform) pickFile() <-chan picker.PickResult {
 			log.Printf("wormhole: MkdirAll err: %s", err)
 		}
 
-
 		outFile, err := os.CreateTemp(dataDir, "")
 		if err != nil {
 			ch <- picker.PickResult{
@@ -96,6 +95,10 @@ func (d *iosPlatform) pickFile() <-chan picker.PickResult {
 }
 
 func (d *iosPlatform) notifyDownloadManager(name, path, contentType string, size int64) {
+}
+
+func (d *iosPlatform) supportedFeatures() platformFeature {
+	return 0
 }
 
 func (d *iosPlatform) sharedEventCh() chan picker.SharedEvent {

@@ -40,3 +40,7 @@ func (a *androidPlatform) scanQRCode() <-chan string {
 func (a *androidPlatform) requestWriteFilePerm() <-chan picker.PermResult {
 	return jgo.RequestWriteFilePermission(a.viewEvent)
 }
+
+func (d *androidPlatform) supportedFeatures() platformFeature {
+	return supportsQRScanning
+}

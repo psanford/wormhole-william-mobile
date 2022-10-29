@@ -82,6 +82,8 @@ func (ui *UI) loop(w *app.Window) error {
 		platformHandler = newPlatformHandler(fileExplorer)
 	)
 
+	platformFeatures = platformHandler.supportedFeatures()
+
 	var ops op.Ops
 	for {
 		select {
@@ -553,6 +555,8 @@ var (
 	transferInProgress bool
 	confirmInProgress  bool
 
+	platformFeatures platformFeature
+
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
 	scanQRBtn      = new(widget.Clickable)
@@ -723,6 +727,10 @@ var recvTab = Tab{
 				if transferInProgress || recvCodeEditor.Text() != "" {
 					gtx = gtx.Disabled()
 				}
+				if platformFeatures&supportsQRScanning == 0 {
+					return D{}
+				}
+
 				return material.Button(th, scanQRBtn, "Scan QR Code").Layout(gtx)
 			},
 			func(gtx C) D {
@@ -877,6 +885,7 @@ type platformHandler interface {
 	notifyDownloadManager(name, path, contentType string, size int64)
 	scanQRCode() <-chan string
 	requestWriteFilePerm() <-chan picker.PermResult
+	supportedFeatures() platformFeature
 }
 
 // Test colors.

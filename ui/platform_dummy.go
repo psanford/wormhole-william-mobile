@@ -47,3 +47,7 @@ func (d *dummyPlatform) requestWriteFilePerm() <-chan picker.PermResult {
 
 	return ch
 }
+
+func (d *dummyPlatform) supportedFeatures() platformFeature {
+	return 0
+}
