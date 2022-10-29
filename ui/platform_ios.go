@@ -9,7 +9,7 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/io/event"
-	"gioui.org/x/explorer"
+	"github.com/psanford/wormhole-william-mobile/internal/explorer"
 	"github.com/psanford/wormhole-william-mobile/internal/picker"
 )
 
