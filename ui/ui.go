@@ -617,7 +617,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 				return layout.Stack{Alignment: layout.S}.Layout(gtx,
 					layout.Stacked(func(gtx C) D {
 						dims := material.Clickable(gtx, &t.btn, func(gtx C) D {
-							return layout.UniformInset(unit.Dp(12)).Layout(gtx,
+							return layout.UniformInset(unit.Dp(8)).Layout(gtx,
 								material.H6(th, t.Title).Layout,
 							)
 						})
