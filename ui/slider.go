@@ -1,9 +1,9 @@
 package ui
 
 import (
+	"image"
 	"time"
 
-	"gioui.org/f32"
 	"gioui.org/layout"
 	"gioui.org/op"
 )
@@ -90,23 +90,23 @@ func (s *Slider) Layout(gtx layout.Context, w layout.Widget) layout.Dimensions {
 	offset := smooth(s.offset)
 
 	if s.offset > 0 {
-		defer op.Offset(f32.Point{
-			X: float32(dims.Size.X) * (offset - 1),
+		defer op.Offset(image.Point{
+			X: int(float32(dims.Size.X) * (offset - 1)),
 		}).Push(gtx.Ops).Pop()
 		s.lastCall.Add(gtx.Ops)
 
-		defer op.Offset(f32.Point{
-			X: float32(dims.Size.X),
+		defer op.Offset(image.Point{
+			X: dims.Size.X,
 		}).Push(gtx.Ops).Pop()
 		s.nextCall.Add(gtx.Ops)
 	} else {
-		defer op.Offset(f32.Point{
-			X: float32(dims.Size.X) * (offset + 1),
+		defer op.Offset(image.Point{
+			X: int(float32(dims.Size.X) * (offset + 1)),
 		}).Push(gtx.Ops).Pop()
 		s.lastCall.Add(gtx.Ops)
 
-		defer op.Offset(f32.Point{
-			X: float32(-dims.Size.X),
+		defer op.Offset(image.Point{
+			X: -dims.Size.X,
 		}).Push(gtx.Ops).Pop()
 		s.nextCall.Add(gtx.Ops)
 	}
