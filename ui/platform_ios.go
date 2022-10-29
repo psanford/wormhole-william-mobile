@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 	"io"
-	"net/url"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -11,7 +11,6 @@ import (
 	"gioui.org/io/event"
 	"gioui.org/x/explorer"
 	"github.com/psanford/wormhole-william-mobile/internal/picker"
-	"log"
 )
 
 func newPlatformHandler(fileExplorer *explorer.Explorer) platformHandler {
@@ -64,8 +63,8 @@ func (d *iosPlatform) pickFile() <-chan picker.PickResult {
 			return
 		}
 
-		u, err := url.Parse(f.URL())
-		if err != nil {
+		path := f.Name()
+		if path == "" {
 			ch <- picker.PickResult{
 				Err: fmt.Errorf("couldn't parse file url: %s err=%s", f.URL(), err),
 			}
@@ -98,14 +97,14 @@ func (d *iosPlatform) pickFile() <-chan picker.PickResult {
 			return
 		}
 
-		name := filepath.Base(u.Path)
+		name := filepath.Base(path)
 
-		path := outFile.Name()
+		outPath := outFile.Name()
 		outFile.Close()
 
 		ch <- picker.PickResult{
 			Name: name,
-			Path: path,
+			Path: outPath,
 		}
 	}()
 
@@ -139,6 +138,7 @@ func (d *iosPlatform) requestWriteFilePerm() <-chan picker.PermResult {
 type fileResult interface {
 	io.ReadCloser
 	URL() string
+	Name() string
 }
 
 var fileExtensions = []string{

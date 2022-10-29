@@ -14,8 +14,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20201218220906-28db891af037/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 eliasnaur.com/font v0.0.0-20220124212145-832bb8fc08c3 h1:djFprmHZgrSepsHAIRMp5UJn3PzsoTg9drI+BDmif5Q=
 eliasnaur.com/font v0.0.0-20220124212145-832bb8fc08c3/go.mod h1:OYVuxibdk9OSLX8vAqydtRPP87PyTFcT9uH3MlEGBQA=
-gioui.org v0.0.0-20220301130546-cdb288d1f98a/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
 gioui.org v0.0.0-20220628163331-e21c665e70ae/go.mod h1:WHoHbUjH91BJS2xkfps2AhKxji+9o3xwfsphGsCBfnM=
+gioui.org v0.0.0-20220830130127-276b7eefdd65/go.mod h1:GN091SCcGAfHfQiSOetXx7Abdy+8nmONj0ZN63Xxf7w=
 gioui.org v0.0.0-20221023001956-9f62230c380f h1:f6/U99vSCkcyKhYwg0hL5QyGTr6IpRI0vclTyxvvE1U=
 gioui.org v0.0.0-20221023001956-9f62230c380f/go.mod h1:GN091SCcGAfHfQiSOetXx7Abdy+8nmONj0ZN63Xxf7w=
 gioui.org/cmd v0.0.0-20220818080936-02068d6340fc h1:KfVMY8YBF6OBlkw2WgCySAilfsyjtPtZaWaBAKSofo8=
@@ -42,6 +42,7 @@ github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuy
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
+github.com/andybalholm/stroke v0.0.0-20220316233208-2609e58d58a5/go.mod h1:ccdDYaY5+gO+cbnQdFxEXqfy0RkoV25H3jLXUDNM3wg=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
 github.com/apache/thrift v0.13.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
