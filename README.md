@@ -1,12 +1,12 @@
 # wormhole-william-mobile
 
-This is a Magic Wormhole client for Android. (Perhaps someday this will also support iOS).
+This is a Magic Wormhole client for Android an iOS.
 
 Some current limitations:
 - Receiving directories are kept in zip form.
 - Send only supports sending a single file.
 
-## Installing the APK
+## Installing the APK on Android
 
 Available from the Play store:
 https://play.google.com/store/apps/details?id=io.sanford.wormhole_william
@@ -18,7 +18,7 @@ that has developer mode enabled by running:
 apk install wormhole-william.release.apk
 ```
 
-## Building
+## Building for Android
 
 In order to build this you will need a local install of the android SDK. Set the environment
 variable `ANDROID_SDK_ROOT` AND `ANDROID_ROOT` to the path of the android SDK. Currently
@@ -30,6 +30,10 @@ Run `make` and see what happens!
 
 This project uses https://gioui.org/ for its UI. It uses https://github.com/psanford/wormhole-william
 for the underlying wormhole implementation.
+
+## iOS
+
+Currently iOS development is happening on the ios branch.
 
 ## Video Demo
 
