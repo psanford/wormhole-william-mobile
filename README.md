@@ -1,6 +1,6 @@
 # wormhole-william-mobile
 
-This is a Magic Wormhole client for Android an iOS.
+This is a Magic Wormhole client for Android and iOS.
 
 Some current limitations:
 - Receiving directories are kept in zip form.
