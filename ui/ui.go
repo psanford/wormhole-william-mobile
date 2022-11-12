@@ -33,6 +33,7 @@ import (
 	"github.com/psanford/wormhole-william-mobile/internal/picker"
 	"github.com/psanford/wormhole-william-mobile/ui/plog"
 	"github.com/psanford/wormhole-william/wormhole"
+	"rsc.io/qr"
 )
 
 type UI struct {
@@ -225,6 +226,7 @@ func (ui *UI) loop(w *app.Window) error {
 							case <-cancelChan:
 								cancel()
 								statusMsg = "Transfer mid-stream aborted"
+								qrSendTxtImg.Src = paint.NewImageOp(image.NewGray(image.Rect(0, 0, 0, 0)))
 								textCodeTxt.SetText("")
 								transferInProgress = false
 								w.Invalidate()
@@ -238,6 +240,17 @@ func (ui *UI) loop(w *app.Window) error {
 							plog.Printf("Send err: %s", err)
 							return
 						}
+
+						qrText := fmt.Sprintf("wormhole:%s?code=%s", conf.RendezvousURL, code)
+						qrCode, err := qr.Encode(qrText, qr.M)
+						if err != nil {
+							statusMsg = fmt.Sprintf("Send err: %s", err)
+							plog.Printf("Send err: %s", err)
+							return
+						}
+						qrCode.Scale = 1
+						qrSendTxtImg.Src = paint.NewImageOp(qrCode.Image())
+						w.Invalidate()
 
 						statusMsg = "Waiting for receiver..."
 						textCodeTxt.SetText(code)
@@ -256,6 +269,7 @@ func (ui *UI) loop(w *app.Window) error {
 							} else if s.OK {
 								statusMsg = "OK!"
 							}
+							qrSendTxtImg.Src = paint.NewImageOp(image.NewGray(image.Rect(0, 0, 0, 0)))
 							textCodeTxt.SetText("")
 							w.Invalidate()
 						}()
@@ -499,6 +513,17 @@ func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string
 			return
 		}
 
+		qrText := fmt.Sprintf("wormhole:%s?code=%s", ui.wormholeClient.RendezvousURL, code)
+		qrCode, err := qr.Encode(qrText, qr.M)
+		if err != nil {
+			statusMsg = fmt.Sprintf("Send err: %s", err)
+			plog.Printf("Send err: %s", err)
+			return
+		}
+		qrCode.Scale = 1
+		qrSendFileImg.Src = paint.NewImageOp(qrCode.Image())
+		w.Invalidate()
+
 		sendFileCodeTxt.SetText(code)
 		statusMsg = "Waiting for receiver..."
 
@@ -549,6 +574,9 @@ var (
 
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
+	qrImage        = new(widget.Image)
+	qrSendTxtImg   = new(widget.Image)
+	qrSendFileImg  = new(widget.Image)
 	scanQRBtn      = new(widget.Clickable)
 	recvTxtMsg     = new(Copyable)
 	itemList       = &layout.List{
@@ -687,6 +715,12 @@ var sendTextTab = Tab{
 				return D{}
 			},
 			func(gtx C) D {
+				if transferInProgress || recvCodeEditor.Text() == "" {
+					gtx = gtx.Disabled()
+				}
+				return qrSendTxtImg.Layout(gtx)
+			},
+			func(gtx C) D {
 				if transferInProgress || confirmInProgress {
 					return material.Button(th, cancelBtn, "Cancel").Layout(gtx)
 				}
@@ -795,6 +829,12 @@ var sendFileTab = Tab{
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(400)
 				return CopyField(th, sendFileCodeTxt).Layout(gtx)
+			},
+			func(gtx C) D {
+				if transferInProgress || recvCodeEditor.Text() == "" {
+					gtx = gtx.Disabled()
+				}
+				return qrSendFileImg.Layout(gtx)
 			},
 			func(gtx C) D {
 				if transferInProgress || confirmInProgress {
