@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="io.sanford.wormhole_william"
           xmlns:tools="http://schemas.android.com/tools"
           >
   <uses-permission android:name="android.permission.INTERNET"/>
