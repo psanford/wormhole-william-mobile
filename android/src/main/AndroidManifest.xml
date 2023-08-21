@@ -14,6 +14,7 @@
         android:label="Wormhole William"
         android:name="org.gioui.GioActivity"
         android:theme="@style/Theme.GioApp"
+        android:exported="true"
         android:windowSoftInputMode="adjustResize">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
@@ -22,6 +23,7 @@
     </activity>
     <activity
         android:label="Wormhole William"
+        android:exported="true"
         android:name="io.sanford.wormholewilliam.Share">
       <intent-filter>
         <action android:name="android.intent.action.SEND" />
