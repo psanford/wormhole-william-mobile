@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"gioui.org/app"
-	"gioui.org/font/gofont"
 	"gioui.org/io/event"
 	"gioui.org/io/key"
 	"gioui.org/io/system"
@@ -55,7 +54,7 @@ func (ui *UI) Run() error {
 }
 
 func (ui *UI) loop(w *app.Window) error {
-	th := material.NewTheme(gofont.Collection())
+	th := material.NewTheme()
 
 	dataDir, _ := app.DataDir()
 	conf := config.Load(dataDir)

@@ -3,8 +3,8 @@ module github.com/psanford/wormhole-william-mobile
 go 1.16
 
 require (
-	gioui.org v0.0.0-20221023001956-9f62230c380f
-	gioui.org/cmd v0.0.0-20220818080936-02068d6340fc
+	gioui.org v0.2.0
+	gioui.org/cmd v0.0.0-20230711191157-4128f253e857
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

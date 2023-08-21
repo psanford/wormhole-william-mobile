@@ -4,7 +4,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.6.0'
+        classpath 'com.android.tools.build:gradle:7.4.2'
     }
 }
 
@@ -21,6 +21,7 @@ allprojects {
 apply plugin: 'com.android.application'
 
 android {
+    namespace "io.sanford.wormhole_william"
     ndkVersion "21.3.6528147"
     compileSdkVersion 30
     defaultConfig {
