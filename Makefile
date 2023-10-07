@@ -1,5 +1,4 @@
 AAR=android/libs/wormhole-william.aar
-BUILDTOOLS=$(ANDROID_SDK_ROOT)/build-tools/33.0.2
 ZIPALIGN=$(BUILDTOOLS)/zipalign
 APKSIGNER=$(BUILDTOOLS)/apksigner
 SIGNKEY=$(HOME)/.android-release/wormhole-william-release.keystore
