@@ -6,6 +6,7 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -37,7 +38,7 @@ public class WriteFilePerm extends Fragment {
   @Override public void onAttach(Context ctx) {
     super.onAttach(ctx);
     Log.d("wormhole", "WriteFilePerm: onAttach()");
-    if (ctx.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+    if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.R && ctx.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
       requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
     } else {
       permissionResult(true);
