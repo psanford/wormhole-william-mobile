@@ -24,6 +24,7 @@ pkgs.mkShell {
   shellHook = ''
     export GRADLE_OPTS="-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidComposition.androidsdk}/libexec/android-sdk/build-tools/${buildToolsVersion}/aapt2";
     export ANDROID_SDK_ROOT="${androidComposition.androidsdk}/libexec/android-sdk"
+    export BUILDTOOLS="${androidComposition.androidsdk}/libexec/android-sdk/build-tools/${buildToolsVersion}/"
   '';
 
 }
