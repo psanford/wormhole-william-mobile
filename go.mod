@@ -3,7 +3,7 @@ module github.com/psanford/wormhole-william-mobile
 go 1.19
 
 require (
-	gioui.org v0.2.0
+	gioui.org v0.4.0
 	gioui.org/cmd v0.0.0-20230711191157-4128f253e857
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0
 	github.com/psanford/wormhole-william v1.0.6
@@ -12,7 +12,7 @@ require (
 
 require (
 	gioui.org/cpu v0.0.0-20210817075930-8d6a761490d2 // indirect
-	gioui.org/shader v1.0.6 // indirect
+	gioui.org/shader v1.0.8 // indirect
 	github.com/akavel/rsrc v0.10.1 // indirect
 	github.com/go-text/typesetting v0.0.0-20230803102845-24e03d8b5372 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

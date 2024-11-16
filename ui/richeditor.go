@@ -32,7 +32,7 @@ type RichEditor struct {
 func (r *RichEditor) Layout(gtx C) D {
 	// if the copy button was clicked, write the contents of the editor
 	// into the system clipboard.
-	if r.copyButton.Clicked() {
+	if r.copyButton.Clicked(gtx) {
 		clipboard.WriteOp{
 			Text: r.Editor.Text(),
 		}.Add(gtx.Ops)
@@ -40,7 +40,7 @@ func (r *RichEditor) Layout(gtx C) D {
 	// if the paste button was clicked, request the contents of the system
 	// clipboard. This is asynchronous, and the results will be delivered
 	// in a future frame.
-	if r.pasteButton.Clicked() {
+	if r.pasteButton.Clicked(gtx) {
 		clipboard.ReadOp{
 			Tag: &r.tag,
 		}.Add(gtx.Ops)
