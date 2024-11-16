@@ -18,7 +18,7 @@ pkgs.mkShell {
   nativeBuildInputs = with pkgs.buildPackages; [
     openjdk17
     androidComposition.androidsdk
-    go_1_20
+    go_1_22
   ];
 
   shellHook = ''
