@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -25,7 +24,7 @@ func (c *Config) Save() error {
 
 func Load(dataDir string) *Config {
 	filename := filepath.Join(dataDir, "wormhole-william.json")
-	content, err := ioutil.ReadFile(filename)
+	content, err := os.ReadFile(filename)
 	if err != nil {
 		return &Config{
 			confFilename: filename,

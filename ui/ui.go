@@ -7,7 +7,6 @@ import (
 	"image"
 	"image/color"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -297,7 +296,7 @@ func (ui *UI) loop(w *app.Window) error {
 							}
 							switch msg.Type {
 							case wormhole.TransferText:
-								msgBody, err := ioutil.ReadAll(msg)
+								msgBody, err := io.ReadAll(msg)
 								if err != nil {
 									errf("Recv msg err: %s", err)
 									return

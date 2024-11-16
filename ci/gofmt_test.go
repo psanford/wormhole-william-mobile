@@ -6,7 +6,6 @@ package ci
 import (
 	"bytes"
 	"go/format"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +29,7 @@ func TestGofmt(t *testing.T) {
 			return nil
 		}
 
-		content, err := ioutil.ReadFile(path)
+		content, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
