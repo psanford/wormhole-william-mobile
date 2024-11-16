@@ -30,7 +30,7 @@ func (c *Copyable) Text() string {
 func (r *Copyable) Layout(gtx C) D {
 	// if the copy button was clicked, write the contents of the editor
 	// into the system clipboard.
-	if r.copyButton.Clicked() {
+	if r.copyButton.Clicked(gtx) {
 		clipboard.WriteOp{
 			Text: r.text,
 		}.Add(gtx.Ops)

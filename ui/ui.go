@@ -73,9 +73,22 @@ func (ui *UI) loop(w *app.Window) error {
 		qrCodeResult <-chan string
 		permResultCh <-chan picker.PermResult
 
+		windowEventCh   = make(chan event.Event)
+		windowAckCh     = make(chan struct{})
 		ctx             = context.Background()
 		platformHandler = newPlatformHandler()
 	)
+
+	go func() {
+		for {
+			ev := w.NextEvent()
+			windowEventCh <- ev
+			<-windowAckCh
+			if _, ok := ev.(system.DestroyEvent); ok {
+				return
+			}
+		}
+	}()
 
 	var ops op.Ops
 	for {
@@ -136,9 +149,10 @@ func (ui *UI) loop(w *app.Window) error {
 			case <-time.After(5 * time.Second):
 				plog.Printf("write hasPermissionChan timed out")
 			}
-		case e := <-w.Events():
+		case e := <-windowEventCh:
 			switch e := e.(type) {
 			case system.DestroyEvent:
+				windowAckCh <- struct{}{}
 				return e.Err
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, e)
@@ -165,7 +179,7 @@ func (ui *UI) loop(w *app.Window) error {
 					{"cancelBtn", cancelBtn, &cancelClicked},
 				}
 				for _, btn := range btns {
-					for btn.btn.Clicked() {
+					for btn.btn.Clicked(gtx) {
 						*btn.clicked = true
 					}
 				}
@@ -452,9 +466,11 @@ func (ui *UI) loop(w *app.Window) error {
 
 				drawTabs(gtx, th)
 				e.Frame(gtx.Ops)
+				windowAckCh <- struct{}{}
 
 			default:
 				platformHandler.handleEvent(e)
+				windowAckCh <- struct{}{}
 			}
 		}
 	}
@@ -597,7 +613,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 		layout.Rigid(func(gtx C) D {
 			return tabs.list.Layout(gtx, len(tabs.tabs), func(gtx C, tabIdx int) D {
 				t := &tabs.tabs[tabIdx]
-				if t.btn.Clicked() {
+				if t.btn.Clicked(gtx) {
 					if tabs.selected < tabIdx {
 						slider.PushLeft()
 					} else if tabs.selected > tabIdx {
