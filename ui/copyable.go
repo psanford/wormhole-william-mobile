@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"io"
+	"strings"
+
 	"gioui.org/io/clipboard"
 	"gioui.org/layout"
 	"gioui.org/unit"
@@ -30,10 +33,11 @@ func (c *Copyable) Text() string {
 func (r *Copyable) Layout(gtx C) D {
 	// if the copy button was clicked, write the contents of the editor
 	// into the system clipboard.
-	if r.copyButton.Clicked() {
-		clipboard.WriteOp{
-			Text: r.text,
-		}.Add(gtx.Ops)
+	if r.copyButton.Clicked(gtx) {
+		gtx.Execute(clipboard.WriteCmd{
+			Type: "application/text",
+			Data: io.NopCloser(strings.NewReader(r.text)),
+		})
 	}
 
 	return D{}
