@@ -1,7 +1,11 @@
 package ui
 
 import (
+	"io"
+	"strings"
+
 	"gioui.org/io/clipboard"
+	"gioui.org/io/transfer"
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -32,25 +36,31 @@ type RichEditor struct {
 func (r *RichEditor) Layout(gtx C) D {
 	// if the copy button was clicked, write the contents of the editor
 	// into the system clipboard.
-	if r.copyButton.Clicked() {
-		clipboard.WriteOp{
-			Text: r.Editor.Text(),
-		}.Add(gtx.Ops)
+	if r.copyButton.Clicked(gtx) {
+		gtx.Execute(clipboard.WriteCmd{
+			Type: "application/text",
+			Data: io.NopCloser(strings.NewReader(r.Editor.Text())),
+		})
 	}
 	// if the paste button was clicked, request the contents of the system
 	// clipboard. This is asynchronous, and the results will be delivered
 	// in a future frame.
-	if r.pasteButton.Clicked() {
-		clipboard.ReadOp{
-			Tag: &r.tag,
-		}.Add(gtx.Ops)
+	if r.pasteButton.Clicked(gtx) {
+		gtx.Execute(clipboard.ReadCmd{Tag: r.tag})
 	}
 	// check for the results of a requested paste operation and insert them
 	// into the editor if they arrive.
-	for _, e := range gtx.Events(&r.tag) {
+	for {
+		e, ok := gtx.Event(transfer.TargetFilter{Target: r.tag, Type: "application/text"})
+		if !ok {
+			break
+		}
 		switch e := e.(type) {
-		case clipboard.Event:
-			r.Editor.Insert(e.Text)
+		case transfer.DataEvent:
+			content, err := io.ReadAll(e.Open())
+			if err == nil {
+				r.Editor.Insert(string(content))
+			}
 		}
 	}
 	return D{}
