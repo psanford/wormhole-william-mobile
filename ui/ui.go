@@ -541,7 +541,7 @@ func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string
 }
 
 var (
-	textMsgEditor = new(widget.Editor)
+	textMsgEditor = new(RichEditor)
 	textCodeTxt   = new(widget.Editor)
 	sendTextBtn   = new(widget.Clickable)
 
@@ -564,7 +564,7 @@ var (
 	transferInProgress bool
 	confirmInProgress  bool
 
-	recvCodeEditor = new(widget.Editor)
+	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
 	scanQRBtn      = new(widget.Clickable)
 	recvTxtMsg     = new(widget.Editor)
@@ -658,7 +658,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	)
 }
 
-func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
+func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *RichEditor) func(layout.Context) layout.Dimensions {
 	return func(gtx layout.Context) layout.Dimensions {
 		flex := layout.Flex{
 			Axis: layout.Vertical,
@@ -668,10 +668,10 @@ func textField(gtx layout.Context, th *material.Theme, label, hint string, edito
 				return material.H5(th, label).Layout(gtx)
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				e := PasteEditor(th, editor, hint)
+
 				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Dp(2)}
 				return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-					e := material.Editor(th, editor, hint)
 					return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
 				})
 			}),
