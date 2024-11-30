@@ -18,6 +18,7 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/io/event"
+	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -222,8 +223,7 @@ func (ui *UI) loop(w *app.Window) error {
 
 				if sendTextClicked {
 					func() {
-						// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-						// key.FocusOp{}.Add(&ops) // blur textfield
+						gtx.Execute(key.FocusCmd{}) // blur textfield
 
 						msg := textMsgEditor.Text()
 						if msg == "" {
@@ -280,8 +280,7 @@ func (ui *UI) loop(w *app.Window) error {
 						statusMsg = "Start recv"
 						w.Invalidate()
 
-						// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-						// key.FocusOp{}.Add(&ops) // blur textfield
+						gtx.Execute(key.FocusCmd{}) // blur textfield
 						code := recvCodeEditor.Text()
 						if code == "" {
 							return
