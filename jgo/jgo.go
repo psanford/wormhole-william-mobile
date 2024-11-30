@@ -38,6 +38,8 @@ func PickFile(viewEvt app.ViewEvent) <-chan picker.PickResult {
 	pendingResult = make(chan picker.PickResult, 1)
 	globalStateMux.Unlock()
 
+	androidViewEvt := viewEvt.(app.AndroidViewEvent)
+
 	go func() {
 		jvm := jni.JVMFor(app.JavaVM())
 		err := jni.Do(jvm, func(env jni.Env) error {
@@ -59,7 +61,7 @@ func PickFile(viewEvt app.ViewEvent) <-chan picker.PickResult {
 
 			mid = jni.GetMethodID(env, cls, "register", "(Landroid/view/View;)V")
 
-			return jni.CallVoidMethod(env, inst, mid, jni.Value(viewEvt.View))
+			return jni.CallVoidMethod(env, inst, mid, jni.Value(androidViewEvt.View))
 		})
 
 		if err != nil {
@@ -78,6 +80,8 @@ func RequestWriteFilePermission(viewEvt app.ViewEvent) <-chan picker.PermResult 
 	}
 	pendingPermResult = make(chan picker.PermResult, 1)
 	globalStateMux.Unlock()
+
+	androidViewEvt := viewEvt.(app.AndroidViewEvent)
 
 	go func() {
 		jvm := jni.JVMFor(app.JavaVM())
@@ -100,7 +104,7 @@ func RequestWriteFilePermission(viewEvt app.ViewEvent) <-chan picker.PermResult 
 
 			mid = jni.GetMethodID(env, cls, "register", "(Landroid/view/View;)V")
 
-			jni.CallVoidMethod(env, inst, mid, jni.Value(viewEvt.View))
+			jni.CallVoidMethod(env, inst, mid, jni.Value(androidViewEvt.View))
 			return err
 		})
 
@@ -113,6 +117,8 @@ func RequestWriteFilePermission(viewEvt app.ViewEvent) <-chan picker.PermResult 
 }
 
 func NotifyDownloadManager(viewEvt app.ViewEvent, name, path, contentType string, size int64) {
+	androidViewEvt := viewEvt.(app.AndroidViewEvent)
+
 	go func() {
 		jvm := jni.JVMFor(app.JavaVM())
 		err := jni.Do(jvm, func(env jni.Env) error {
@@ -138,7 +144,7 @@ func NotifyDownloadManager(viewEvt app.ViewEvent, name, path, contentType string
 			jpath := jni.JavaString(env, path)
 			jcontentType := jni.JavaString(env, contentType)
 
-			return jni.CallVoidMethod(env, inst, mid, jni.Value(viewEvt.View), jni.Value(jname), jni.Value(jpath), jni.Value(jcontentType), jni.Value(size))
+			return jni.CallVoidMethod(env, inst, mid, jni.Value(androidViewEvt.View), jni.Value(jname), jni.Value(jpath), jni.Value(jcontentType), jni.Value(size))
 		})
 		if err != nil {
 			log.Printf("Err: %s", err)
@@ -150,6 +156,8 @@ func ScanQRCode(viewEvt app.ViewEvent) chan string {
 	globalStateMux.Lock()
 	pendingQRScanResult = make(chan string, 1)
 	globalStateMux.Unlock()
+
+	androidViewEvt := viewEvt.(app.AndroidViewEvent)
 
 	go func() {
 		jvm := jni.JVMFor(app.JavaVM())
@@ -172,7 +180,7 @@ func ScanQRCode(viewEvt app.ViewEvent) chan string {
 
 			mid = jni.GetMethodID(env, cls, "register", sig)
 
-			return jni.CallVoidMethod(env, inst, mid, jni.Value(viewEvt.View))
+			return jni.CallVoidMethod(env, inst, mid, jni.Value(androidViewEvt.View))
 		})
 		if err != nil {
 			log.Printf("ScnQRCode jvm err: %s", err)

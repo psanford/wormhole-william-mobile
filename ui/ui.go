@@ -17,9 +17,8 @@ import (
 	"time"
 
 	"gioui.org/app"
+	"gioui.org/font"
 	"gioui.org/io/event"
-	"gioui.org/io/key"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -43,7 +42,8 @@ func New() *UI {
 }
 
 func (ui *UI) Run() error {
-	w := app.NewWindow(app.Size(unit.Dp(800), unit.Dp(700)))
+	w := new(app.Window)
+	w.Option(app.Size(unit.Dp(800), unit.Dp(700)))
 
 	if err := ui.loop(w); err != nil {
 		log.Fatal(err)
@@ -81,10 +81,10 @@ func (ui *UI) loop(w *app.Window) error {
 
 	go func() {
 		for {
-			ev := w.NextEvent()
+			ev := w.Event()
 			windowEventCh <- ev
 			<-windowAckCh
-			if _, ok := ev.(system.DestroyEvent); ok {
+			if _, ok := ev.(app.DestroyEvent); ok {
 				return
 			}
 		}
@@ -151,11 +151,11 @@ func (ui *UI) loop(w *app.Window) error {
 			}
 		case e := <-windowEventCh:
 			switch e := e.(type) {
-			case system.DestroyEvent:
+			case app.DestroyEvent:
 				windowAckCh <- struct{}{}
 				return e.Err
-			case system.FrameEvent:
-				gtx := layout.NewContext(&ops, e)
+			case app.FrameEvent:
+				gtx := app.NewContext(&ops, e)
 
 				var (
 					sendFileClicked bool
@@ -223,7 +223,8 @@ func (ui *UI) loop(w *app.Window) error {
 
 				if sendTextClicked {
 					func() {
-						key.FocusOp{}.Add(&ops) // blur textfield
+						// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+						// key.FocusOp{}.Add(&ops) // blur textfield
 
 						msg := textMsgEditor.Text()
 						if msg == "" {
@@ -280,7 +281,8 @@ func (ui *UI) loop(w *app.Window) error {
 						statusMsg = "Start recv"
 						w.Invalidate()
 
-						key.FocusOp{}.Add(&ops) // blur textfield
+						// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+						// key.FocusOp{}.Add(&ops) // blur textfield
 						code := recvCodeEditor.Text()
 						if code == "" {
 							return
@@ -450,7 +452,9 @@ func (ui *UI) loop(w *app.Window) error {
 					}()
 				}
 
-				for _, e := range recvCodeEditor.Events() {
+				for moreEvents := true; moreEvents; {
+					var e widget.EditorEvent
+					e, moreEvents = recvCodeEditor.Update(gtx)
 					if _, ok := e.(widget.ChangeEvent); ok {
 						orig := recvCodeEditor.Text()
 						new := strings.ReplaceAll(orig, " ", "-")
@@ -538,8 +542,8 @@ func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string
 }
 
 var (
-	textMsgEditor = new(RichEditor)
-	textCodeTxt   = new(Copyable)
+	textMsgEditor = new(widget.Editor)
+	textCodeTxt   = new(widget.Editor)
 	sendTextBtn   = new(widget.Clickable)
 
 	rendezvousEditor = &widget.Editor{
@@ -561,15 +565,15 @@ var (
 	transferInProgress bool
 	confirmInProgress  bool
 
-	recvCodeEditor = new(RichEditor)
+	recvCodeEditor = new(widget.Editor)
 	recvMsgBtn     = new(widget.Clickable)
 	scanQRBtn      = new(widget.Clickable)
-	recvTxtMsg     = new(Copyable)
+	recvTxtMsg     = new(widget.Editor)
 	itemList       = &layout.List{
 		Axis: layout.Vertical,
 	}
 
-	sendFileCodeTxt = new(Copyable)
+	sendFileCodeTxt = new(widget.Editor)
 	sendFileBtn     = new(widget.Clickable)
 
 	topLabel = "Wormhole William"
@@ -655,7 +659,7 @@ func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	)
 }
 
-func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *RichEditor) func(layout.Context) layout.Dimensions {
+func textField(gtx layout.Context, th *material.Theme, label, hint string, editor *widget.Editor) func(layout.Context) layout.Dimensions {
 	return func(gtx layout.Context) layout.Dimensions {
 		flex := layout.Flex{
 			Axis: layout.Vertical,
@@ -665,10 +669,12 @@ func textField(gtx layout.Context, th *material.Theme, label, hint string, edito
 				return material.H5(th, label).Layout(gtx)
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				e := PasteEditor(th, editor, hint)
 				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Dp(2)}
 				return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
+					// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+					// return layout.UniformInset(unit.Dp(8)).Layout(gtx, e)
+					return PasteEditor(th, editor, hint).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
+
 				})
 			}),
 		)
@@ -696,7 +702,7 @@ var sendTextTab = Tab{
 			func(gtx C) D {
 				if textCodeTxt.Text() != "" {
 					gtx.Constraints.Max.Y = gtx.Dp(400)
-					return CopyField(th, textCodeTxt).Layout(gtx)
+					return CopyField(th, textCodeTxt).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
 				}
 				return D{}
 			},
@@ -753,7 +759,7 @@ var recvTab = Tab{
 			},
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(200)
-				return CopyField(th, recvTxtMsg).Layout(gtx)
+				return CopyField(th, recvTxtMsg).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
 			},
 		}
 
@@ -808,7 +814,7 @@ var sendFileTab = Tab{
 			},
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(400)
-				return CopyField(th, sendFileCodeTxt).Layout(gtx)
+				return CopyField(th, sendFileCodeTxt).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
 			},
 			func(gtx C) D {
 				if transferInProgress || confirmInProgress {
