@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Unlicense OR MIT
+// Copyright (c) 2019 The Gio authors
+// Originally sourced from
+// https://github.com/gioui/gio-example
+
 package ui
 
 import (
@@ -66,7 +71,7 @@ func (s *Slider) Layout(gtx layout.Context, w layout.Widget) layout.Dimensions {
 			}
 		}
 
-		op.InvalidateOp{}.Add(gtx.Ops)
+		gtx.Execute(op.InvalidateCmd{})
 	}
 
 	var dims layout.Dimensions
