@@ -542,7 +542,7 @@ func (ui *UI) sendFile(ctx context.Context, w *app.Window, path, filename string
 
 var (
 	textMsgEditor = new(RichEditor)
-	textCodeTxt   = new(widget.Editor)
+	textCodeTxt   = new(Copyable)
 	sendTextBtn   = new(widget.Clickable)
 
 	rendezvousEditor = &widget.Editor{
@@ -567,12 +567,12 @@ var (
 	recvCodeEditor = new(RichEditor)
 	recvMsgBtn     = new(widget.Clickable)
 	scanQRBtn      = new(widget.Clickable)
-	recvTxtMsg     = new(widget.Editor)
+	recvTxtMsg     = new(Copyable)
 	itemList       = &layout.List{
 		Axis: layout.Vertical,
 	}
 
-	sendFileCodeTxt = new(widget.Editor)
+	sendFileCodeTxt = new(Copyable)
 	sendFileBtn     = new(widget.Clickable)
 
 	topLabel = "Wormhole William"
@@ -700,8 +700,7 @@ var sendTextTab = Tab{
 			func(gtx C) D {
 				if textCodeTxt.Text() != "" {
 					gtx.Constraints.Max.Y = gtx.Dp(400)
-					// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-					return material.Editor(th, textCodeTxt, "").Layout(gtx)
+					return CopyField(th, textCodeTxt).Layout(gtx)
 				}
 				return D{}
 			},
@@ -758,9 +757,7 @@ var recvTab = Tab{
 			},
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(200)
-				return material.Editor(th, recvTxtMsg, "").Layout(gtx)
-				// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-				// return CopyField(th, recvTxtMsg).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(12), op.CallOp{}, op.CallOp{})
+				return CopyField(th, recvTxtMsg).Layout(gtx)
 			},
 		}
 
@@ -815,9 +812,7 @@ var sendFileTab = Tab{
 			},
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(400)
-				return material.Editor(th, sendFileCodeTxt, "").Layout(gtx)
-				// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-				// return CopyField(th, sendFileCodeTxt).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(12), op.CallOp{}, op.CallOp{})
+				return CopyField(th, sendFileCodeTxt).Layout(gtx)
 			},
 			func(gtx C) D {
 				if transferInProgress || confirmInProgress {
