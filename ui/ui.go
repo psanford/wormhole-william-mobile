@@ -608,9 +608,20 @@ type (
 func drawTabs(gtx layout.Context, th *material.Theme) layout.Dimensions {
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			return layout.UniformInset(unit.Dp(12)).Layout(gtx,
-				material.H4(th, topLabel).Layout,
-			)
+			bg := clip.Rect{Max: image.Pt(gtx.Constraints.Max.X, gtx.Dp(56))}.Push(gtx.Ops)
+			paint.ColorOp{Color: color.NRGBA{R: 63, G: 81, B: 181, A: 255}}.Add(gtx.Ops)
+			paint.PaintOp{}.Add(gtx.Ops)
+			bg.Pop()
+
+			return layout.Inset{
+				Top:    unit.Dp(16),
+				Bottom: unit.Dp(16),
+				Left:   unit.Dp(24),
+			}.Layout(gtx, func(gtx C) D {
+				label := material.H5(th, topLabel)
+				label.Color = color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+				return label.Layout(gtx)
+			})
 		}),
 		layout.Rigid(func(gtx C) D {
 			return tabs.list.Layout(gtx, len(tabs.tabs), func(gtx C, tabIdx int) D {
