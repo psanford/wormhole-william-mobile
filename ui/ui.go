@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"gioui.org/app"
-	"gioui.org/font"
 	"gioui.org/io/event"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -672,9 +671,8 @@ func textField(gtx layout.Context, th *material.Theme, label, hint string, edito
 				border := widget.Border{Color: color.NRGBA{A: 0xff}, CornerRadius: unit.Dp(8), Width: unit.Dp(2)}
 				return border.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-					// return layout.UniformInset(unit.Dp(8)).Layout(gtx, e)
-					return PasteEditor(th, editor, hint).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
-
+					e := material.Editor(th, editor, hint)
+					return layout.UniformInset(unit.Dp(8)).Layout(gtx, e.Layout)
 				})
 			}),
 		)
@@ -702,7 +700,8 @@ var sendTextTab = Tab{
 			func(gtx C) D {
 				if textCodeTxt.Text() != "" {
 					gtx.Constraints.Max.Y = gtx.Dp(400)
-					return CopyField(th, textCodeTxt).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
+					// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+					return material.Editor(th, textCodeTxt, "").Layout(gtx)
 				}
 				return D{}
 			},
@@ -759,7 +758,9 @@ var recvTab = Tab{
 			},
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(200)
-				return CopyField(th, recvTxtMsg).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
+				return material.Editor(th, recvTxtMsg, "").Layout(gtx)
+				// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+				// return CopyField(th, recvTxtMsg).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(12), op.CallOp{}, op.CallOp{})
 			},
 		}
 
@@ -814,7 +815,9 @@ var sendFileTab = Tab{
 			},
 			func(gtx C) D {
 				gtx.Constraints.Max.Y = gtx.Dp(400)
-				return CopyField(th, sendFileCodeTxt).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(10), op.CallOp{}, op.CallOp{})
+				return material.Editor(th, sendFileCodeTxt, "").Layout(gtx)
+				// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+				// return CopyField(th, sendFileCodeTxt).Layout(gtx, th.Shaper, font.Font{}, unit.Sp(12), op.CallOp{}, op.CallOp{})
 			},
 			func(gtx C) D {
 				if transferInProgress || confirmInProgress {
