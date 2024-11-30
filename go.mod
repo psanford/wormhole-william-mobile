@@ -9,6 +9,7 @@ require (
 	gioui.org/cmd v0.7.1
 	git.wow.st/gmp/jni v0.0.0-20210610011705-34026c7e22d0
 	github.com/psanford/wormhole-william v1.0.6
+	golang.org/x/exp/shiny v0.0.0-20240707233637-46b078467d37
 )
 
 require (
@@ -22,7 +23,6 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
-	golang.org/x/exp/shiny v0.0.0-20240707233637-46b078467d37 // indirect
 	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
