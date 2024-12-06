@@ -924,24 +924,42 @@ type parsedCode struct {
 }
 
 func parseCodeURI(codeStr string) (*parsedCode, error) {
-	if !strings.HasPrefix(codeStr, "wormhole:") {
-		return nil, errors.New("not a wormhole code")
-	}
 
-	u := strings.TrimPrefix(codeStr, "wormhole:")
-
-	url, err := url.Parse(u)
+	uri, err = url.Parse(codeStr)
 	if err != nil {
 		return nil, err
 	}
 
-	code := url.Query().Get("code")
-	if code == "" {
-		return nil, errors.New("no code")
-	}
+        if uri.Scheme == "wormhole" {
+		u := strings.TrimPrefix(codeStr, "wormhole:")
+		uri, err = url.Parse(codeStr)
+	        if err != nil {
+        	        return nil, err
+	        }
 
-	return &parsedCode{
-		relay: url.Host,
-		code:  code,
-	}, nil
+                code := url.Query().Get("code")
+
+		return &parsedCode{
+			relay: url.Host,
+			code:  code,
+		}, nil
+	} else if uri.Scheme == "wormhole-transfer" {
+                code := uri.Path
+	        if code == "" {
+		   return nil, errors.New("no code")
+              	}
+
+                q := uri.Query()
+	        rendezvous := q.Get("rendezvous")
+              	if rendezvous == "" {
+                   rendezvous := wormhole.DefaultRendezvousURL
+               	}
+
+               	return &parsedCode{
+                		relay: rendezvous,
+		                code:  code,
+               	}, nil
+        } else {
+		return nil, errors.New("not a wormhole code")
+	}
 }
