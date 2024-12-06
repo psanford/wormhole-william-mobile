@@ -930,23 +930,36 @@ func parseCodeURI(codeStr string) (*parsedCode, error) {
 		return nil, err
 	}
 
-        if !uri.Scheme == "wormhole-transfer" {
+        if uri.Scheme == "wormhole" {
+		u := strings.TrimPrefix(codeStr, "wormhole:")
+		uri, err = url.Parse(codeStr)
+	        if err != nil {
+        	        return nil, err
+	        }
+
+                code := url.Query().Get("code")
+
+		return &parsedCode{
+			relay: url.Host,
+			code:  code,
+		}, nil
+	} else if uri.Scheme == "wormhole-transfer" {
+                code := uri.Path
+	        if code == "" {
+		   return nil, errors.New("no code")
+              	}
+
+                q := uri.Query()
+	        rendezvous := q.Get("rendezvous")
+              	if rendezvous == "" {
+                   rendezvous := wormhole.DefaultRendezvousURL
+               	}
+
+               	return &parsedCode{
+                		relay: rendezvous,
+		                code:  code,
+               	}, nil
+        } else {
 		return nil, errors.New("not a wormhole code")
 	}
-
-        code := uri.Path
-	if code == "" {
-		return nil, errors.New("no code")
-	}
-
-	q := uri.Query()
-	rendezvous := q.Get("rendezvous")
-	if rendezvous == "" {
-		rendezvous := wormhole.DefaultRendezvousURL
-	}
-
-	return &parsedCode{
-		relay: rendezvous,
-		code:  code,
-	}, nil
 }
