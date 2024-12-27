@@ -32,9 +32,8 @@ public class Scan extends Fragment {
 
   @Override public void onAttach(Context ctx) {
     super.onAttach(ctx);
-
     IntentIntegrator integrator = IntentIntegrator.forFragment(this);
-    integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+    integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
     integrator.setPrompt("Scan");
     integrator.setCameraId(0);
     integrator.setBeepEnabled(false);
