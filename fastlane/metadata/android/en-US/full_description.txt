@@ -1,0 +1,1 @@
+<p>This is a Magic Wormhole client for Android. (Perhaps someday this will also support iOS).</p><p>Some current limitations:</p><ul><li>Receiving directories are kept in zip form.</li><li>Send only supports sending a single file.</li></ul>
