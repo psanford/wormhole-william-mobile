@@ -943,6 +943,10 @@ func parseCodeURI(codeStr string) (*parsedCode, error) {
 	} else if strings.HasPrefix(codeStr, "wormhole-transfer:") {
 		// magic-wormhole URI Scheme
 		code := strings.TrimPrefix(codeStr, "wormhole-transfer:")
+		code, err := url.QueryUnescape(code)
+		if err != nil {
+			return nil, err
+		}
 		if code == "" {
 			return nil, errors.New("no code")
 		}
