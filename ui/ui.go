@@ -924,24 +924,33 @@ type parsedCode struct {
 }
 
 func parseCodeURI(codeStr string) (*parsedCode, error) {
-	if !strings.HasPrefix(codeStr, "wormhole:") {
-		return nil, errors.New("not a wormhole code")
+	if strings.HasPrefix(codeStr, "wormhole:") {
+		// wormhole-william code
+		u := strings.TrimPrefix(codeStr, "wormhole:")
+		url, err := url.Parse(u)
+		if err != nil {
+			return nil, err
+		}
+
+		code := url.Query().Get("code")
+		if code == "" {
+			return nil, errors.New("no code")
+		}
+		return &parsedCode{
+			relay: url.Host,
+			code:  code,
+		}, nil
+	} else if strings.HasPrefix(codeStr, "wormhole-transfer:") {
+		// magic-wormhole URI Scheme
+		code := strings.TrimPrefix(codeStr, "wormhole-transfer:")
+		if code == "" {
+			return nil, errors.New("no code")
+		}
+		return &parsedCode{
+			relay: "",
+			code:  code,
+		}, nil
 	}
 
-	u := strings.TrimPrefix(codeStr, "wormhole:")
-
-	url, err := url.Parse(u)
-	if err != nil {
-		return nil, err
-	}
-
-	code := url.Query().Get("code")
-	if code == "" {
-		return nil, errors.New("no code")
-	}
-
-	return &parsedCode{
-		relay: url.Host,
-		code:  code,
-	}, nil
+	return nil, errors.New("not a wormhole code")
 }
