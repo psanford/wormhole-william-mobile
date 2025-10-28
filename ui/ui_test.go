@@ -51,3 +51,13 @@ func TestParsingMagicWormholeUriPercentEncoded(t *testing.T) {
 		t.Errorf("got %s, %v expected %s", parsed.code, err, unencodedCode)
 	}
 }
+
+func TestParsingMagicWormholeUriWithQueryParams(t *testing.T) {
+	uri := "wormhole-transfer:" + expectedCode + "?version=0&rendezvous=ws%3A%2F%2Frelay.magic-wormhole.io%3A4000&role=follower"
+
+	parsed, err := parseCodeURI(uri)
+
+	if parsed.code != expectedCode || err != nil {
+		t.Errorf("got %s, %v, expected %s", parsed.code, err, expectedCode)
+	}
+}
