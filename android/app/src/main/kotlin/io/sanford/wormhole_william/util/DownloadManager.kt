@@ -1,13 +1,24 @@
 package io.sanford.wormhole_william.util
 
 import android.app.DownloadManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import io.sanford.wormhole_william.R
 import java.io.File
 import java.io.FileInputStream
+
+private const val CHANNEL_ID = "wormhole_downloads"
+private const val NOTIFICATION_ID = 1001
 
 /**
  * Registers a file with Android's Download Manager so it appears in the Downloads app.
@@ -18,18 +29,23 @@ fun Context.notifyDownloadManager(
     path: String,
     mimeType: String,
     size: Long
-): Boolean {
+): Result<Uri> {
     return try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // On Android 10+, use MediaStore to copy to Downloads
             copyToDownloadsViaMediaStore(name, path, mimeType, size)
         } else {
             // On older Android, copy to public Downloads and register with DownloadManager
             copyToDownloadsLegacy(name, path, mimeType, size)
         }
+
+        // Show notification
+        showDownloadCompleteNotification(name, uri, mimeType)
+
+        Result.success(uri)
     } catch (e: Exception) {
         e.printStackTrace()
-        false
+        Result.failure(e)
     }
 }
 
@@ -38,7 +54,7 @@ private fun Context.copyToDownloadsViaMediaStore(
     sourcePath: String,
     mimeType: String,
     size: Long
-): Boolean {
+): Uri {
     val contentValues = ContentValues().apply {
         put(MediaStore.Downloads.DISPLAY_NAME, name)
         put(MediaStore.Downloads.MIME_TYPE, mimeType)
@@ -48,12 +64,15 @@ private fun Context.copyToDownloadsViaMediaStore(
 
     val resolver = contentResolver
     val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-        ?: return false
+        ?: throw IllegalStateException("Failed to create MediaStore entry for Downloads")
 
-    return try {
-        resolver.openOutputStream(uri)?.use { outputStream ->
-            FileInputStream(sourcePath).use { inputStream ->
-                inputStream.copyTo(outputStream)
+    try {
+        val outputStream = resolver.openOutputStream(uri)
+            ?: throw IllegalStateException("Failed to open output stream for Downloads")
+
+        outputStream.use { out ->
+            FileInputStream(sourcePath).use { input ->
+                input.copyTo(out)
             }
         }
 
@@ -62,7 +81,7 @@ private fun Context.copyToDownloadsViaMediaStore(
         contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
         resolver.update(uri, contentValues, null, null)
 
-        true
+        return uri
     } catch (e: Exception) {
         // Delete the incomplete file
         resolver.delete(uri, null, null)
@@ -75,7 +94,7 @@ private fun Context.copyToDownloadsLegacy(
     sourcePath: String,
     mimeType: String,
     size: Long
-): Boolean {
+): Uri {
     // Copy to public Downloads directory
     @Suppress("DEPRECATION")
     val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
@@ -89,6 +108,7 @@ private fun Context.copyToDownloadsLegacy(
 
     // Register with DownloadManager
     val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    @Suppress("DEPRECATION")
     downloadManager.addCompletedDownload(
         name,
         "Received via Wormhole William",
@@ -99,5 +119,48 @@ private fun Context.copyToDownloadsLegacy(
         true
     )
 
-    return true
+    return Uri.fromFile(destFile)
+}
+
+private fun Context.showDownloadCompleteNotification(name: String, uri: Uri, mimeType: String) {
+    // Create notification channel for Android O+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Downloads",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Wormhole file transfer notifications"
+        }
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    // Create intent to open the file
+    val openIntent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mimeType)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    val pendingIntent = PendingIntent.getActivity(
+        this,
+        0,
+        openIntent,
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+
+    val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        .setSmallIcon(android.R.drawable.stat_sys_download_done)
+        .setContentTitle("Download complete")
+        .setContentText(name)
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setContentIntent(pendingIntent)
+        .setAutoCancel(true)
+        .build()
+
+    try {
+        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, notification)
+    } catch (e: SecurityException) {
+        // Notification permission not granted, ignore
+    }
 }

@@ -111,18 +111,17 @@ class ReceiveViewModel(application: Application) : AndroidViewModel(application)
                         val fileSize = _uiState.value.pendingFileSize
                         val mimeType = detectMimeType(state.path)
 
-                        val success = context.notifyDownloadManager(
+                        val result = context.notifyDownloadManager(
                             name = fileName,
                             path = state.path,
                             mimeType = mimeType,
                             size = fileSize
                         )
 
-                        val statusMsg = if (success) {
-                            "File saved to Downloads: $fileName"
-                        } else {
-                            "File saved: ${state.path}"
-                        }
+                        val statusMsg = result.fold(
+                            onSuccess = { _ -> "File saved to Downloads: $fileName" },
+                            onFailure = { e -> "File received but failed to copy to Downloads: ${e.message}" }
+                        )
 
                         _uiState.update {
                             it.copy(
