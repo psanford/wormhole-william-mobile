@@ -31,7 +31,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             # Go toolchain
-            go_1_22
+            go_1_25
 
             # Android toolchain
             androidSdk

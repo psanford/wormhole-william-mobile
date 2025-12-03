@@ -31,12 +31,6 @@ curl -L https://nixos.org/nix/install | sh
 experimental-features = nix-command flakes
 ```
 
-Alternatively, manually set up:
-- Go 1.22+
-- Android SDK (API level 34)
-- Android NDK
-- JDK 17
-
 ### Build Commands
 
 ```bash
