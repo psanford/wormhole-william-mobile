@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam.util
+package io.sanford.wormhole_william.util
 
 /**
  * Formats a byte count into a human-readable string.

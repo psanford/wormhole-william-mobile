@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam
+package io.sanford.wormhole_william
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,13 +26,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.sanford.wormholewilliam.ui.ScanQRCodeContract
-import io.sanford.wormholewilliam.ui.parseWormholeUri
-import io.sanford.wormholewilliam.ui.screens.ReceiveScreen
-import io.sanford.wormholewilliam.ui.screens.SendFileScreen
-import io.sanford.wormholewilliam.ui.screens.SendTextScreen
-import io.sanford.wormholewilliam.ui.screens.SettingsScreen
-import io.sanford.wormholewilliam.ui.viewmodel.ReceiveViewModel
+import io.sanford.wormhole_william.ui.ScanQRCodeContract
+import io.sanford.wormhole_william.ui.parseWormholeUri
+import io.sanford.wormhole_william.ui.screens.ReceiveScreen
+import io.sanford.wormhole_william.ui.screens.SendFileScreen
+import io.sanford.wormhole_william.ui.screens.SendTextScreen
+import io.sanford.wormhole_william.ui.screens.SettingsScreen
+import io.sanford.wormhole_william.ui.viewmodel.ReceiveViewModel
 
 data class TabItem(
     val title: String,

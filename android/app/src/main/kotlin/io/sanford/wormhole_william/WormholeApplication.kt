@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam
+package io.sanford.wormhole_william
 
 import android.app.Application
 

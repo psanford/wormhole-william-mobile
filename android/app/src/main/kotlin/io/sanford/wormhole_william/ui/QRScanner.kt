@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam.ui
+package io.sanford.wormhole_william.ui
 
 import android.app.Activity
 import android.content.Context

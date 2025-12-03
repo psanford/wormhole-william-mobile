@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam.ui.screens
+package io.sanford.wormhole_william.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.sanford.wormholewilliam.ui.viewmodel.SettingsViewModel
+import io.sanford.wormhole_william.ui.viewmodel.SettingsViewModel
 
 // Default rendezvous URL from wormhole-william
 private const val DEFAULT_RENDEZVOUS_URL = "wss://mailbox.mw.leastauthority.com/v1"

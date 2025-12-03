@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam.repository
+package io.sanford.wormhole_william.repository
 
 import android.content.Context
 import kotlinx.coroutines.channels.awaitClose
@@ -215,7 +215,7 @@ class WormholeRepository(
         fun getInstance(context: Context): WormholeRepository {
             return instance ?: synchronized(this) {
                 instance ?: run {
-                    val app = context.applicationContext as io.sanford.wormholewilliam.WormholeApplication
+                    val app = context.applicationContext as io.sanford.wormhole_william.WormholeApplication
                     WormholeRepository(context.applicationContext, app.wormholeClient).also {
                         instance = it
                     }

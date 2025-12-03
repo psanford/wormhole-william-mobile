@@ -1,8 +1,11 @@
-package io.sanford.wormholewilliam.ui.screens
+package io.sanford.wormhole_william.ui.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,25 +31,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import io.sanford.wormholewilliam.ui.theme.StatusYellow
-import io.sanford.wormholewilliam.ui.viewmodel.SendTextViewModel
+import io.sanford.wormhole_william.ui.theme.StatusYellow
+import io.sanford.wormhole_william.ui.viewmodel.SendFileViewModel
 
 @Composable
-fun SendTextScreen(
-    viewModel: SendTextViewModel = viewModel(),
-    initialText: String? = null
+fun SendFileScreen(
+    viewModel: SendFileViewModel = viewModel(),
+    initialFileUri: Uri? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    // Set initial text if provided (from share intent)
-    LaunchedEffect(initialText) {
-        initialText?.let { viewModel.setInitialMessage(it) }
+    // File picker launcher
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onFileSelected(it) }
+    }
+
+    // Handle initial file from share intent
+    LaunchedEffect(initialFileUri) {
+        initialFileUri?.let { viewModel.setInitialFile(it) }
     }
 
     Column(
@@ -53,43 +66,53 @@ fun SendTextScreen(
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        // Message input section
-        Text(
-            text = "Text",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.message,
-            onValueChange = viewModel::onMessageChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            placeholder = { Text("Message") },
-            trailingIcon = {
-                IconButton(onClick = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { text ->
-                        viewModel.onMessageChanged(text)
-                    }
-                }) {
-                    Icon(Icons.Default.ContentPaste, contentDescription = "Paste")
-                }
-            },
-            enabled = !uiState.isTransferring
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Send button
+        // Choose File button
         Button(
-            onClick = viewModel::onSend,
+            onClick = { filePickerLauncher.launch("*/*") },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isTransferring && uiState.message.isNotBlank()
+            enabled = !uiState.isTransferring && !uiState.isPreparing
         ) {
-            Text("Send")
+            if (uiState.isPreparing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(end = 8.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Icon(
+                    Icons.Default.InsertDriveFile,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+            Text("Choose File")
+        }
+
+        // Selected file display
+        if (uiState.fileName.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Selected File:",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = uiState.fileName,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Send button (only show when file is selected)
+            Button(
+                onClick = viewModel::onSend,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isTransferring && uiState.filePath.isNotEmpty()
+            ) {
+                Text("Send")
+            }
         }
 
         // Code display (when waiting for receiver)
@@ -118,6 +141,15 @@ fun SendTextScreen(
                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
                     }
                 }
+            )
+        }
+
+        // Progress indicator
+        if (uiState.progress > 0f && uiState.isTransferring) {
+            Spacer(modifier = Modifier.height(16.dp))
+            LinearProgressIndicator(
+                progress = { uiState.progress },
+                modifier = Modifier.fillMaxWidth()
             )
         }
 

@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam.ui.theme
+package io.sanford.wormhole_william.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

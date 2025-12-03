@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam
+package io.sanford.wormhole_william
 
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import io.sanford.wormholewilliam.ui.theme.WormholeTheme
+import io.sanford.wormhole_william.ui.theme.WormholeTheme
 
 /**
  * Activity that handles ACTION_SEND intents from other apps.

@@ -1,4 +1,4 @@
-package io.sanford.wormholewilliam.util
+package io.sanford.wormhole_william.util
 
 import android.content.ContentResolver
 import android.content.Context

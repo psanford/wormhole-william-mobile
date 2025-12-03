@@ -1,9 +1,9 @@
-package io.sanford.wormholewilliam.ui.viewmodel
+package io.sanford.wormhole_william.ui.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.sanford.wormholewilliam.repository.WormholeRepository
+import io.sanford.wormhole_william.repository.WormholeRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
