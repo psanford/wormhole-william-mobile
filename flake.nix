@@ -2,7 +2,7 @@
   description = "Wormhole William Mobile - Magic Wormhole client for Android";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -17,10 +17,10 @@
           };
         };
 
-        buildToolsVersion = "34.0.0";
+        buildToolsVersion = "35.0.0";
         androidComposition = pkgs.androidenv.composeAndroidPackages {
-          platformVersions = [ "34" ];
-          buildToolsVersions = [ buildToolsVersion ];
+          platformVersions = [ "34" "35" ];
+          buildToolsVersions = [ "34.0.0" buildToolsVersion ];
           includeNDK = true;
           ndkVersions = [ "26.1.10909125" ];
         };
@@ -31,7 +31,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             # Go toolchain
-            go_1_22
+            go_1_25
 
             # Android toolchain
             androidSdk
