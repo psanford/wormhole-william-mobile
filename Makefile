@@ -43,7 +43,7 @@ release: $(AAR_OUTPUT)
 # Generate Go bindings AAR using gomobile
 $(AAR_OUTPUT): $(shell find $(GO_WORMHOLE_PKG) -name '*.go' -type f)
 	mkdir -p $(dir $@)
-	$(GOMOBILE) bind -v \
+	PATH=$(TOOLSBIN):$(PATH) $(GOMOBILE) bind -v \
 		-target=android \
 		-androidapi 24 \
 		-o $@ \
@@ -54,7 +54,7 @@ $(AAR_OUTPUT): $(shell find $(GO_WORMHOLE_PKG) -name '*.go' -type f)
 init:
 	GOBIN=$(TOOLSBIN) go install golang.org/x/mobile/cmd/gomobile
 	GOBIN=$(TOOLSBIN) go install golang.org/x/mobile/cmd/gobind
-	$(GOMOBILE) init
+	PATH=$(TOOLSBIN):$(PATH) $(GOMOBILE) init
 
 # Clean build artifacts
 .PHONY: clean
