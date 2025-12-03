@@ -76,17 +76,3 @@ test:
 .PHONY: fmt
 fmt:
 	go fmt ./...
-
-# --- Legacy targets (for backwards compatibility during migration) ---
-
-# Build using old gogio method (deprecated)
-LEGACY_AAR = android/libs/wormhole-william.aar
-
-.PHONY: legacy-debug
-legacy-debug: $(LEGACY_AAR)
-	(cd android && ./gradlew assembleDebug)
-	mv android/build/outputs/apk/debug/android-debug.apk wormhole-william.debug.apk
-
-$(LEGACY_AAR): $(shell find . -name '*.go' -o -name '*.java' -o -name '*.xml' -type f)
-	mkdir -p $(@D)
-	go run gioui.org/cmd/gogio -buildmode archive -target android -appid io.sanford.wormhole_william -o $@ .
