@@ -50,17 +50,13 @@
             export BUILDTOOLS="${androidSdk}/libexec/android-sdk/build-tools/${buildToolsVersion}"
             export GRADLE_OPTS="-Dorg.gradle.project.android.aapt2FromMavenOverride=$BUILDTOOLS/aapt2"
 
-            # Ensure gomobile is available
-            export PATH="$HOME/go/bin:$PATH"
-
             echo "Wormhole William Mobile development environment"
             echo "  Go: $(go version)"
             echo "  Android SDK: $ANDROID_SDK_ROOT"
             echo "  NDK: $ANDROID_NDK_HOME"
             echo ""
-            echo "To initialize gomobile (first time only):"
-            echo "  go install golang.org/x/mobile/cmd/gomobile@latest"
-            echo "  gomobile init"
+            echo "Run 'make init' to initialize gomobile (first time only)"
+            echo "Run 'make' to build the debug APK"
           '';
         };
       }
