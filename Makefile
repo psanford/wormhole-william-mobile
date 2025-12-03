@@ -9,7 +9,7 @@ ANDROID_DIR = android
 AAR_OUTPUT = $(ANDROID_DIR)/app/libs/wormhole.aar
 
 # Tools (BUILDTOOLS should be set by nix develop or shell.nix)
-GOMOBILE = go run golang.org/x/mobile/cmd/gomobile@latest
+GOMOBILE = go run golang.org/x/mobile/cmd/gomobile
 GRADLE = $(ANDROID_DIR)/gradlew
 
 # Build tools (set BUILDTOOLS env var from nix shell)
