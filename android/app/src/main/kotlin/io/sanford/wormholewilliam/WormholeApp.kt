@@ -1,8 +1,7 @@
 package io.sanford.wormholewilliam
 
-import androidx.compose.foundation.layout.Column
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CallReceived
@@ -26,10 +25,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.viewmodel.compose.viewModel
+import io.sanford.wormholewilliam.ui.ScanQRCodeContract
+import io.sanford.wormholewilliam.ui.parseWormholeUri
 import io.sanford.wormholewilliam.ui.screens.ReceiveScreen
 import io.sanford.wormholewilliam.ui.screens.SendFileScreen
 import io.sanford.wormholewilliam.ui.screens.SendTextScreen
 import io.sanford.wormholewilliam.ui.screens.SettingsScreen
+import io.sanford.wormholewilliam.ui.viewmodel.ReceiveViewModel
 
 data class TabItem(
     val title: String,
@@ -56,6 +59,20 @@ fun WormholeApp(
     }
 
     var selectedTab by remember { mutableIntStateOf(initialTab) }
+
+    // Shared ReceiveViewModel so QR scanner can set the code
+    val receiveViewModel: ReceiveViewModel = viewModel()
+
+    // QR code scanner launcher
+    val qrScannerLauncher = rememberLauncherForActivityResult(
+        contract = ScanQRCodeContract()
+    ) { result ->
+        result?.let { scannedContent ->
+            // Parse the QR code content
+            val code = parseWormholeUri(scannedContent) ?: scannedContent
+            receiveViewModel.setCode(code)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -89,7 +106,10 @@ fun WormholeApp(
             color = MaterialTheme.colorScheme.background
         ) {
             when (selectedTab) {
-                0 -> ReceiveScreen()
+                0 -> ReceiveScreen(
+                    viewModel = receiveViewModel,
+                    onScanQR = { qrScannerLauncher.launch(Unit) }
+                )
                 1 -> SendTextScreen(initialText = (initialShare as? SharedData.Text)?.content)
                 2 -> SendFileScreen(initialFileUri = (initialShare as? SharedData.File)?.uri)
                 3 -> SettingsScreen()
