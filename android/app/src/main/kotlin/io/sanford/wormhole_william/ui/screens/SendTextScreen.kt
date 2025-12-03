@@ -10,13 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,8 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.sanford.wormhole_william.ui.theme.StatusYellow
@@ -54,72 +57,98 @@ fun SendTextScreen(
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        // Message input section
-        Text(
-            text = "Text",
-            style = MaterialTheme.typography.titleLarge
-        )
+        // Message input card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Message",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
-        Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
-            value = uiState.message,
-            onValueChange = viewModel::onMessageChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            placeholder = { Text("Message") },
-            trailingIcon = {
-                IconButton(onClick = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { text ->
-                        viewModel.onMessageChanged(text)
-                    }
-                }) {
-                    Icon(Icons.Default.ContentPaste, contentDescription = "Paste")
-                }
-            },
-            enabled = !uiState.isTransferring
-        )
+                OutlinedTextField(
+                    value = uiState.message,
+                    onValueChange = viewModel::onMessageChanged,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    placeholder = { Text("Enter text to send...") },
+                    enabled = !uiState.isTransferring
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Send button
         Button(
             onClick = viewModel::onSend,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(12.dp),
             enabled = !uiState.isTransferring && uiState.message.isNotBlank()
         ) {
-            Text("Send")
+            Text(
+                "Send",
+                style = MaterialTheme.typography.titleMedium
+            )
         }
 
         // Code display (when waiting for receiver)
         if (uiState.code.isNotEmpty()) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Code:",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = uiState.code,
-                onValueChange = {},
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                readOnly = true,
-                singleLine = true,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Wormhole code", uiState.code)
-                        clipboard.setPrimaryClip(clip)
-                    }) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Share this code",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = uiState.code,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FilledTonalButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Wormhole code", uiState.code)
+                            clipboard.setPrimaryClip(clip)
+                        }
+                    ) {
+                        Text("Copy Code")
                     }
                 }
-            )
+            }
         }
 
         // Cancel button
@@ -127,7 +156,10 @@ fun SendTextScreen(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = viewModel::onCancel,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Cancel")
             }
@@ -140,6 +172,7 @@ fun SendTextScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Surface(
                 color = StatusYellow,
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

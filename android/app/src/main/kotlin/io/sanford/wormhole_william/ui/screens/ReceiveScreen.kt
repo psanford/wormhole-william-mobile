@@ -11,16 +11,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -34,6 +38,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.sanford.wormhole_william.ui.theme.StatusYellow
@@ -56,60 +62,98 @@ fun ReceiveScreen(
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        // Code input section
-        Text(
-            text = "Code",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = uiState.code,
-            onValueChange = viewModel::onCodeChanged,
+        // Code input card
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Enter wormhole code") },
-            singleLine = true,
-            trailingIcon = {
-                IconButton(onClick = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { text ->
-                        viewModel.onCodeChanged(text)
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Enter Code",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = uiState.code,
+                    onValueChange = viewModel::onCodeChanged,
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("e.g. 7-guitarist-revenge") },
+                    singleLine = true,
+                    enabled = !uiState.isTransferring,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = FontFamily.Monospace
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Action buttons row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Paste button
+                    FilledTonalButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { text ->
+                                viewModel.onCodeChanged(text)
+                            }
+                        },
+                        enabled = !uiState.isTransferring,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.ContentPaste,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Paste")
                     }
-                }) {
-                    Icon(Icons.Default.ContentPaste, contentDescription = "Paste")
+
+                    // QR Code button
+                    if (onScanQR != null) {
+                        FilledTonalButton(
+                            onClick = onScanQR,
+                            enabled = !uiState.isTransferring,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Default.QrCodeScanner,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Scan QR")
+                        }
+                    }
                 }
-            },
-            enabled = !uiState.isTransferring
-        )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // QR Code button
-        if (onScanQR != null) {
-            Button(
-                onClick = onScanQR,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isTransferring && uiState.code.isEmpty()
-            ) {
-                Icon(
-                    Icons.Default.QrCodeScanner,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text("Scan QR Code")
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
 
         // Receive button
         Button(
             onClick = viewModel::onReceive,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(12.dp),
             enabled = !uiState.isTransferring && uiState.code.isNotEmpty()
         ) {
-            Text("Receive")
+            Text(
+                "Receive",
+                style = MaterialTheme.typography.titleMedium
+            )
         }
 
         // Cancel button
@@ -117,7 +161,10 @@ fun ReceiveScreen(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = viewModel::onCancel,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Cancel")
             }
@@ -125,10 +172,21 @@ fun ReceiveScreen(
 
         // Progress indicator
         if (uiState.progress > 0f && uiState.isTransferring) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             LinearProgressIndicator(
                 progress = { uiState.progress },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp),
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "${(uiState.progress * 100).toInt()}%",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
         }
 
@@ -136,30 +194,43 @@ fun ReceiveScreen(
         if (uiState.receivedText.isNotEmpty()) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Received Text",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Received Text",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = uiState.receivedText,
-                onValueChange = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                readOnly = true,
-                trailingIcon = {
-                    IconButton(onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Received text", uiState.receivedText)
-                        clipboard.setPrimaryClip(clip)
-                    }) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                    Text(
+                        text = uiState.receivedText,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    FilledTonalButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("Received text", uiState.receivedText)
+                            clipboard.setPrimaryClip(clip)
+                        },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Copy to Clipboard")
                     }
                 }
-            )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -169,6 +240,7 @@ fun ReceiveScreen(
             Spacer(modifier = Modifier.height(16.dp))
             Surface(
                 color = StatusYellow,
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

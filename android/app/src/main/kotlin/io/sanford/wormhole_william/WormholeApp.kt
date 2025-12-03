@@ -1,12 +1,17 @@
 package io.sanford.wormhole_william
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallReceived
-import androidx.compose.material.icons.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.filled.CallReceived
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -23,8 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.sanford.wormhole_william.ui.ScanQRCodeContract
 import io.sanford.wormhole_william.ui.parseWormholeUri
@@ -40,9 +48,9 @@ data class TabItem(
 )
 
 val tabs = listOf(
-    TabItem("Receive", Icons.Default.CallReceived),
-    TabItem("Send Text", Icons.Default.Message),
-    TabItem("Send File", Icons.Default.InsertDriveFile),
+    TabItem("Receive", Icons.AutoMirrored.Filled.CallReceived),
+    TabItem("Text", Icons.AutoMirrored.Filled.Message),
+    TabItem("File", Icons.Default.AttachFile),
     TabItem("Settings", Icons.Default.Settings)
 )
 
@@ -78,7 +86,17 @@ fun WormholeApp(
         topBar = {
             TopAppBar(
                 title = {
-                    Text("Wormhole William")
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.mipmap.ic_launcher_foreground),
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Wormhole William")
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
