@@ -1,11 +1,6 @@
 package io.sanford.wormhole_william.ui.screens
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -35,9 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,7 +45,6 @@ fun ReceiveScreen(
     onScanQR: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     Column(
@@ -92,48 +83,22 @@ fun ReceiveScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                // QR Code button
+                if (onScanQR != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // Action buttons row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Paste button
                     FilledTonalButton(
-                        onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            clipboard.primaryClip?.getItemAt(0)?.text?.toString()?.let { text ->
-                                viewModel.onCodeChanged(text)
-                            }
-                        },
+                        onClick = onScanQR,
                         enabled = !uiState.isTransferring,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(
-                            Icons.Default.ContentPaste,
+                            Icons.Default.QrCodeScanner,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Paste")
-                    }
-
-                    // QR Code button
-                    if (onScanQR != null) {
-                        FilledTonalButton(
-                            onClick = onScanQR,
-                            enabled = !uiState.isTransferring,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                Icons.Default.QrCodeScanner,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Scan QR")
-                        }
+                        Text("Scan QR Code")
                     }
                 }
             }
@@ -216,19 +181,6 @@ fun ReceiveScreen(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    FilledTonalButton(
-                        onClick = {
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clip = ClipData.newPlainText("Received text", uiState.receivedText)
-                            clipboard.setPrimaryClip(clip)
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Copy to Clipboard")
-                    }
                 }
             }
         }
