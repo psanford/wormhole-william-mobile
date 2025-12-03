@@ -13,6 +13,7 @@ val SecondaryDark = Color(0xFF304FFE)
 
 // Status colors
 val StatusYellow = Color(0xFFFFFEE3)
+val StatusYellowText = Color(0xFF1C1B1F)  // Dark text for yellow background
 val StatusGreen = Color(0xFF4CAF50)
 val StatusRed = Color(0xFFF44336)
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.sanford.wormhole_william.ui.theme.StatusYellow
+import io.sanford.wormhole_william.ui.theme.StatusYellowText
 import io.sanford.wormhole_william.ui.viewmodel.SendFileViewModel
 
 @Composable
@@ -176,7 +177,8 @@ fun SendFileScreen(
                 Text(
                     text = uiState.status,
                     modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = StatusYellowText
                 )
             }
         }
