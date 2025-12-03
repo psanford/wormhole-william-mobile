@@ -41,11 +41,13 @@ release: $(AAR_OUTPUT)
 	rm wormhole-william-unsigned-aligned.apk
 
 # Generate Go bindings AAR using gomobile
+# -ldflags with -extldflags ensures 16KB page alignment for Android 15+
 $(AAR_OUTPUT): $(shell find $(GO_WORMHOLE_PKG) -name '*.go' -type f)
 	mkdir -p $(dir $@)
 	PATH=$(TOOLSBIN):$(PATH) $(GOMOBILE) bind -v \
 		-target=android \
 		-androidapi 24 \
+		-ldflags='-extldflags=-Wl,-z,max-page-size=16384' \
 		-o $@ \
 		$(GO_WORMHOLE_PKG)
 
