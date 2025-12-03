@@ -4,3 +4,7 @@ jgo.jar
 android/build/
 android/.gradle
 android/libs/
+
+# Nix
+result
+result-*

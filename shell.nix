@@ -1,3 +1,7 @@
+# DEPRECATED: This shell.nix is kept for backwards compatibility.
+# Please use the flake-based development environment instead:
+#   nix develop
+
 { pkgs ? import <nixpkgs> {} }:
 
 with import <nixpkgs> {
