@@ -9,7 +9,7 @@ ANDROID_DIR = android
 AAR_OUTPUT = $(ANDROID_DIR)/app/libs/wormhole.aar
 
 # Tools (BUILDTOOLS should be set by nix develop or shell.nix)
-GOMOBILE = gomobile
+GOMOBILE = go run golang.org/x/mobile/cmd/gomobile@latest
 GRADLE = $(ANDROID_DIR)/gradlew
 
 # Build tools (set BUILDTOOLS env var from nix shell)
@@ -51,7 +51,6 @@ $(AAR_OUTPUT): $(shell find $(GO_WORMHOLE_PKG) -name '*.go' -type f)
 # Initialize gomobile (one-time setup)
 .PHONY: init
 init:
-	go install golang.org/x/mobile/cmd/gomobile@latest
 	$(GOMOBILE) init
 
 # Clean build artifacts
