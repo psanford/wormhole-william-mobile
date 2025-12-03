@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.sanford.wormholewilliam.repository.WormholeRepository
+import io.sanford.wormholewilliam.util.detectMimeType
 import io.sanford.wormholewilliam.util.formatBytes
+import io.sanford.wormholewilliam.util.notifyDownloadManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -103,10 +105,29 @@ class ReceiveViewModel(application: Application) : AndroidViewModel(application)
                     }
 
                     is WormholeRepository.ReceiveOfferState.FileComplete -> {
+                        // Register with download manager
+                        val context = getApplication<Application>()
+                        val fileName = _uiState.value.pendingFileName
+                        val fileSize = _uiState.value.pendingFileSize
+                        val mimeType = detectMimeType(state.path)
+
+                        val success = context.notifyDownloadManager(
+                            name = fileName,
+                            path = state.path,
+                            mimeType = mimeType,
+                            size = fileSize
+                        )
+
+                        val statusMsg = if (success) {
+                            "File saved to Downloads: $fileName"
+                        } else {
+                            "File saved: ${state.path}"
+                        }
+
                         _uiState.update {
                             it.copy(
                                 isTransferring = false,
-                                status = "File saved: ${state.path}",
+                                status = statusMsg,
                                 progress = 1f,
                                 code = ""
                             )
