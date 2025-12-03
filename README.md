@@ -15,21 +15,86 @@ Prebuilt APKs are provided with each release. You can install this to an android
 that has developer mode enabled by running:
 
 ```
-apk install wormhole-william.release.apk
+adb install wormhole-william.release.apk
 ```
 
 ## Building for Android
 
-In order to build this you will need a local install of the android SDK. Set the environment
-variable `ANDROID_SDK_ROOT` AND `ANDROID_ROOT` to the path of the android SDK. Currently
-this project is hard coded to use platform `android-30` (in the make file), so you will need
-to have that installed (or edit the make file for whatever you have). You will also need
-a modern version of Go. Probably >= 1.16.
+### Prerequisites
 
-Run `make` and see what happens!
+This project uses Nix for reproducible builds. Install Nix and enable flakes:
 
-This project uses https://gioui.org/ for its UI. It uses https://github.com/psanford/wormhole-william
-for the underlying wormhole implementation.
+```bash
+# Install Nix (if not already installed)
+curl -L https://nixos.org/nix/install | sh
+
+# Enable flakes (add to ~/.config/nix/nix.conf)
+experimental-features = nix-command flakes
+```
+
+Alternatively, you can manually set up:
+- Go 1.22+
+- Android SDK (API level 34)
+- Android NDK 26
+- JDK 17
+- gomobile
+
+### Building
+
+```bash
+# Enter the development environment
+nix develop
+
+# One-time setup: initialize gomobile
+make init
+
+# Build debug APK
+make
+
+# Build release APK (requires signing key)
+make release
+```
+
+The debug APK will be created at `wormhole-william.debug.apk`.
+
+### Project Structure
+
+```
+wormhole-william-mobile/
+├── wormhole/              # Go library (gomobile-compatible API)
+│   ├── wormhole.go        # Main client API
+│   ├── callbacks.go       # Callback interfaces for Android
+│   ├── pending.go         # File transfer acceptance handling
+│   └── config.go          # Configuration persistence
+│
+├── android/               # Android application
+│   ├── app/               # Main Android module
+│   │   └── src/main/
+│   │       ├── kotlin/    # Kotlin/Compose UI
+│   │       └── res/       # Android resources
+│   └── build.gradle.kts   # Gradle configuration
+│
+├── Makefile               # Build orchestration
+├── flake.nix              # Nix flake for dev environment
+└── shell.nix              # Legacy Nix shell (deprecated)
+```
+
+### Architecture
+
+The app uses a native Android UI built with Jetpack Compose, with the wormhole
+protocol logic implemented in Go and bound via gomobile:
+
+```
+┌─────────────────────────────────────┐
+│         Kotlin/Compose UI           │
+│  (Screens, ViewModels, Repository)  │
+└──────────────┬──────────────────────┘
+               │ gomobile bindings
+┌──────────────▼──────────────────────┐
+│          Go wormhole package        │
+│    (Wraps wormhole-william lib)     │
+└─────────────────────────────────────┘
+```
 
 ## iOS
 
