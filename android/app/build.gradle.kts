@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "io.sanford.wormhole_william"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "io.sanford.wormhole_william"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 19
         versionName = "2.0.0"
 
