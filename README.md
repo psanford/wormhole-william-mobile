@@ -91,6 +91,12 @@ The app uses a native Android UI built with Jetpack Compose. The wormhole protoc
 └─────────────────────────────────────┘
 ```
 
+## Screenshots
+
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv.png" alt="Receive" width="250" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send-text.png" alt="Send Text" width="250" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send-file.png" alt="Send File" width="250" />
+
 ## iOS
 
 iOS development is on the `ios` branch.
