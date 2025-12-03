@@ -1,6 +1,18 @@
 *.apk
 *.apk.idsig
 jgo.jar
+
+# Android build outputs
 android/build/
+android/app/build/
 android/.gradle
 android/libs/
+android/app/libs/
+android/local.properties
+
+# Nix
+result
+result-*
+
+# Build tools
+tools/bin/

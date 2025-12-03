@@ -1,50 +1,102 @@
 # wormhole-william-mobile
 
-This is a Magic Wormhole client for Android and iOS.
+A Magic Wormhole client for Android.
 
-Some current limitations:
-- Receiving directories are kept in zip form.
-- Send only supports sending a single file.
+Current limitations:
+- Received directories are kept in zip form
+- Send only supports sending a single file
 
-## Installing the APK on Android
+## Installing
 
-Available from the Play store:
+Available from the Play Store:
 https://play.google.com/store/apps/details?id=io.sanford.wormhole_william
 
-Prebuilt APKs are provided with each release. You can install this to an android device
-that has developer mode enabled by running:
+Prebuilt APKs are provided with each release. Install to an Android device with developer mode enabled:
 
 ```
-apk install wormhole-william.release.apk
+adb install wormhole-william.release.apk
 ```
 
-## Building for Android
+## Building
 
-In order to build this you will need a local install of the android SDK. Set the environment
-variable `ANDROID_SDK_ROOT` AND `ANDROID_ROOT` to the path of the android SDK. Currently
-this project is hard coded to use platform `android-30` (in the make file), so you will need
-to have that installed (or edit the make file for whatever you have). You will also need
-a modern version of Go. Probably >= 1.16.
+### Prerequisites
 
-Run `make` and see what happens!
+This project uses Nix for reproducible builds. Install Nix and enable flakes:
 
-This project uses https://gioui.org/ for its UI. It uses https://github.com/psanford/wormhole-william
-for the underlying wormhole implementation.
+```bash
+# Install Nix (if not already installed)
+curl -L https://nixos.org/nix/install | sh
 
-## iOS
+# Enable flakes (add to ~/.config/nix/nix.conf)
+experimental-features = nix-command flakes
+```
 
-Currently iOS development is happening on the ios branch.
+Alternatively, manually set up:
+- Go 1.22+
+- Android SDK (API level 34)
+- Android NDK
+- JDK 17
 
-## Video Demo
+### Build Commands
 
-This [demo](https://www.youtube.com/watch/FOY4vhUoikU?t=210s) was done as part of a larger talk on the development of Wormhole William Mobile and its use of [Gio](https://gioui.org/):
+```bash
+# Enter the development environment
+nix develop
 
-[![Wormhole William Mobile Demo](https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/wormhole-william-mobile-youtube.png?raw=true)](https://www.youtube.com/watch/FOY4vhUoikU?t=210s "Wormhole William Demo")
+# One-time setup: initialize gomobile
+make init
+
+# Build debug APK
+make
+
+# Build release APK (requires signing key)
+make release
+```
+
+The debug APK will be output to `wormhole-william.debug.apk`.
+
+## Project Structure
+
+```
+wormhole-william-mobile/
+├── wormhole/              # Go library (gomobile bindings)
+│   ├── wormhole.go        # Main client API
+│   ├── callbacks.go       # Callback interfaces for Android
+│   ├── pending.go         # File transfer acceptance handling
+│   └── config.go          # Configuration persistence
+│
+├── android/               # Android application
+│   ├── app/src/main/
+│   │   ├── kotlin/        # Kotlin/Compose UI
+│   │   └── res/           # Android resources
+│   └── build.gradle.kts   # Gradle build config
+│
+├── Makefile               # Build orchestration
+└── flake.nix              # Nix flake for dev environment
+```
+
+## Architecture
+
+The app uses a native Android UI built with Jetpack Compose. The wormhole protocol logic is implemented in Go and bound via gomobile:
+
+```
+┌─────────────────────────────────────┐
+│         Kotlin/Compose UI           │
+│  (Screens, ViewModels, Repository)  │
+└──────────────┬──────────────────────┘
+               │ gomobile bindings
+┌──────────────▼──────────────────────┐
+│          Go wormhole package        │
+│    (Wraps wormhole-william lib)     │
+└─────────────────────────────────────┘
+```
 
 ## Screenshots
 
-<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv1.png?raw=true" alt="Receive 1" width="200" />
-<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv2.png?raw=true" alt="Receive 2" width="200" />
-<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send_text1.png?raw=true" alt="Send Text 1" width="200" />
-<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send_text2.png?raw=true" alt="Send Text 2" width="200" />
-<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send_file1.png?raw=true" alt="Send File" width="200" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/recv.png" alt="Receive" width="250" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send-text.png" alt="Send Text" width="250" />
+<img src="https://raw.githubusercontent.com/psanford/wormhole-william-mobile/main/screenshots/send-file.png" alt="Send File" width="250" />
+
+## iOS
+
+iOS development is on the `ios` branch.
