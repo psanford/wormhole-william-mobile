@@ -13,3 +13,6 @@ android/local.properties
 # Nix
 result
 result-*
+
+# Build tools
+tools/bin/
