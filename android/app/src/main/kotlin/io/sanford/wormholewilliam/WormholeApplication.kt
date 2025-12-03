@@ -20,7 +20,7 @@ class WormholeApplication : Application() {
             wormholeClient.setRendezvousURL(config.rendezvousURL)
         }
         if (config.codeLength > 0) {
-            wormholeClient.setCodeLength(config.codeLength.toInt())
+            wormholeClient.setCodeLength(config.codeLength)
         }
     }
 }
