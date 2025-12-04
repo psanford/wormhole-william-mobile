@@ -21,9 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.sanford.wormhole_william.ui.viewmodel.SettingsViewModel
 
-// Default rendezvous URL from wormhole-william
-private const val DEFAULT_RENDEZVOUS_URL = "wss://mailbox.mw.leastauthority.com/v1"
-
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
@@ -49,7 +46,7 @@ fun SettingsScreen(
             value = uiState.rendezvousUrl,
             onValueChange = viewModel::onRendezvousUrlChanged,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(DEFAULT_RENDEZVOUS_URL) },
+            placeholder = { Text(wormhole.Wormhole.getDefaultRendezvousURL()) },
             singleLine = true
         )
 
