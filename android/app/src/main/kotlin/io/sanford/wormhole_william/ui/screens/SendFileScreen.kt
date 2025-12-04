@@ -69,6 +69,7 @@ fun SendFileScreen(
     if (showQRDialog && uiState.code.isNotEmpty()) {
         QRCodeDialog(
             code = uiState.code,
+            rendezvousUrl = uiState.rendezvousUrl,
             onDismiss = { showQRDialog = false }
         )
     }

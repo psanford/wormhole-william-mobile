@@ -31,7 +31,9 @@ class ScanQRCodeContract : ActivityResultContract<Unit, String?>() {
 /**
  * Parses a wormhole URI from a QR code.
  *
- * Format: wormhole://?code=<code>
+ * Format: wormhole:<rendezvousUrl>?code=<code>
+ * Example: wormhole:ws://relay.magic-wormhole.io:4000/v1?code=5-souvenir-scallion
+ *
  * Returns just the code portion, or null if invalid.
  */
 fun parseWormholeUri(uri: String): String? {
@@ -46,12 +48,16 @@ fun parseWormholeUri(uri: String): String? {
     }
 
     // Parse wormhole URI
-    val withoutScheme = uri.removePrefix("wormhole:")
-
-    // Try to extract code parameter
+    // Format: wormhole:ws://relay.magic-wormhole.io:4000/v1?code=5-word-code
+    // We need to extract the code query parameter from the end
     return try {
-        val url = android.net.Uri.parse("http://dummy$withoutScheme")
-        url.getQueryParameter("code")
+        val codeParam = "?code="
+        val codeIndex = uri.lastIndexOf(codeParam)
+        if (codeIndex != -1) {
+            uri.substring(codeIndex + codeParam.length).trim()
+        } else {
+            null
+        }
     } catch (e: Exception) {
         null
     }

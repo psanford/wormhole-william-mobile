@@ -24,14 +24,17 @@ data class SendFileUiState(
     val isTransferring: Boolean = false,
     val isPreparing: Boolean = false,
     val status: String = "",
-    val progress: Float = 0f
+    val progress: Float = 0f,
+    val rendezvousUrl: String = ""
 )
 
 class SendFileViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = WormholeRepository.getInstance(application)
 
-    private val _uiState = MutableStateFlow(SendFileUiState())
+    private val _uiState = MutableStateFlow(SendFileUiState(
+        rendezvousUrl = repository.getRendezvousURL()
+    ))
     val uiState: StateFlow<SendFileUiState> = _uiState.asStateFlow()
 
     private var currentTransfer: Job? = null

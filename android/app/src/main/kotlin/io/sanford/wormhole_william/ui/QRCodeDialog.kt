@@ -29,10 +29,11 @@ import com.google.zxing.qrcode.QRCodeWriter
 @Composable
 fun QRCodeDialog(
     code: String,
+    rendezvousUrl: String,
     onDismiss: () -> Unit
 ) {
-    val qrBitmap = remember(code) {
-        generateQRCode(code)
+    val qrBitmap = remember(code, rendezvousUrl) {
+        generateQRCode(code, rendezvousUrl)
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -90,10 +91,11 @@ fun QRCodeDialog(
     }
 }
 
-private fun generateQRCode(content: String): Bitmap? {
+private fun generateQRCode(code: String, rendezvousUrl: String): Bitmap? {
     return try {
-        // Use wormhole:// URI format for consistency with the scanner
-        val uri = "wormhole://?code=$content"
+        // Format: wormhole:<rendezvousUrl>?code=<code>
+        // Example: wormhole:ws://relay.magic-wormhole.io:4000/v1?code=5-souvenir-scallion
+        val uri = "wormhole:$rendezvousUrl?code=$code"
         val writer = QRCodeWriter()
         val size = 512
         val bitMatrix = writer.encode(uri, BarcodeFormat.QR_CODE, size, size)
