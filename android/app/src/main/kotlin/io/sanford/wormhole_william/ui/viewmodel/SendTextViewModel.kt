@@ -15,14 +15,17 @@ data class SendTextUiState(
     val message: String = "",
     val code: String = "",
     val isTransferring: Boolean = false,
-    val status: String = ""
+    val status: String = "",
+    val rendezvousUrl: String = ""
 )
 
 class SendTextViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = WormholeRepository.getInstance(application)
 
-    private val _uiState = MutableStateFlow(SendTextUiState())
+    private val _uiState = MutableStateFlow(SendTextUiState(
+        rendezvousUrl = repository.getRendezvousURL()
+    ))
     val uiState: StateFlow<SendTextUiState> = _uiState.asStateFlow()
 
     private var currentTransfer: Job? = null

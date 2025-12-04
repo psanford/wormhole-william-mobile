@@ -12,6 +12,9 @@ import (
 	wh "github.com/psanford/wormhole-william/wormhole"
 )
 
+// DefaultRendezvousURL is the default relay server URL.
+var DefaultRendezvousURL = wh.DefaultRendezvousURL
+
 // Client wraps wormhole-william for mobile use.
 // Create a new client with NewClient() and configure it with
 // SetRendezvousURL() and SetCodeLength() before use.
@@ -39,9 +42,13 @@ func (c *Client) SetRendezvousURL(url string) {
 }
 
 // GetRendezvousURL returns the current relay server URL.
+// Returns DefaultRendezvousURL if no custom URL is set.
 func (c *Client) GetRendezvousURL() string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.client.RendezvousURL == "" {
+		return DefaultRendezvousURL
+	}
 	return c.client.RendezvousURL
 }
 
