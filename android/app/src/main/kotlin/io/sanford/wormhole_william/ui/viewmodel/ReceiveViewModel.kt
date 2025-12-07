@@ -193,6 +193,10 @@ class ReceiveViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { it.copy(receivedText = "") }
     }
 
+    fun onTextCopied() {
+        _uiState.update { it.copy(status = "Text copied to clipboard") }
+    }
+
     override fun onCleared() {
         super.onCleared()
         currentTransfer?.cancel()
