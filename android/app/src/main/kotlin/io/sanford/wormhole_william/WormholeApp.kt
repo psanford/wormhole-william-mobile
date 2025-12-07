@@ -82,8 +82,14 @@ fun WormholeApp(
     ) { result ->
         result?.let { scannedContent ->
             // Parse the QR code content
-            val code = parseWormholeUri(scannedContent) ?: scannedContent
-            receiveViewModel.setCode(code)
+            val parsed = parseWormholeUri(scannedContent)
+            if (parsed != null) {
+                parsed.rendezvousUrl?.let { receiveViewModel.setRendezvousUrl(it) }
+                receiveViewModel.setCode(parsed.code)
+            } else {
+                // Fall back to using raw content as code
+                receiveViewModel.setCode(scannedContent)
+            }
         }
     }
 
