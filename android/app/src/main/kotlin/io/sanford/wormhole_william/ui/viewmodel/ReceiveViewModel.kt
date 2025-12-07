@@ -49,6 +49,10 @@ class ReceiveViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { it.copy(code = code) }
     }
 
+    fun setRendezvousUrl(url: String) {
+        repository.setRendezvousURL(url)
+    }
+
     fun onReceive() {
         val code = _uiState.value.code
         if (code.isBlank()) return
